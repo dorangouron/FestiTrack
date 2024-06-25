@@ -1,10 +1,11 @@
+import 'package:festitrack/models/event_model.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class MapWidget extends StatefulWidget {
-  final String? eventId;
+  final Event event;
 
-  const MapWidget({super.key, this.eventId});
+  const MapWidget({super.key, required this.event});
 
   @override
   _MapWidgetState createState() => _MapWidgetState();
