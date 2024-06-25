@@ -3,6 +3,7 @@ import 'package:festitrack/models/event_model.dart';
 import 'package:festitrack/screens/create_event_screen.dart';
 import 'package:festitrack/screens/event_details_screen.dart';
 import 'package:festitrack/screens/map_widget.dart';
+import 'package:festitrack/screens/sign_in_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
@@ -25,7 +26,10 @@ class _HomeScreenState extends State<HomeScreen> {
     super.initState();
     _fetchEvents();
   }
-
+Future<void> signOut(BuildContext context) async {
+  await FirebaseAuth.instance.signOut();
+  Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => SignInScreen())); // Ensure you have a LoginScreen to navigate to
+}
   Future<void> _fetchEvents() async {
     final now = DateTime.now();
     final userId = widget.user.uid;
@@ -81,6 +85,12 @@ class _HomeScreenState extends State<HomeScreen> {
             ),
           ],
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: () => signOut(context),
+          ),
+        ],
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -88,57 +98,65 @@ class _HomeScreenState extends State<HomeScreen> {
           child: Column(
             children: <Widget>[
               if (_currentEvent != null)
-                LayoutBuilder(
-                  builder: (context, constraints) {
-                    final size = constraints.maxWidth;
-                    return Container(
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey[300]!),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          ClipRRect(
-                            borderRadius: const BorderRadius.only(
-                              topLeft: Radius.circular(16),
-                              topRight: Radius.circular(16),
-                            ),
-                            child: SizedBox(
-                              height: size,
-                              width: size,
-                              child: MapWidget(event: _currentEvent!),
-                            ),
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  _isEventOngoing ? "En cours..." : "À venir...",
-                                  style: const TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.amber,
-                                    fontWeight: FontWeight.w600
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  _currentEvent!.name,
-                                  style: const TextStyle(
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
+                GestureDetector(
+                  onTap: () {
+                                    Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) =>  EventDetailScreen(event: _currentEvent!,)),
+                          );
                   },
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final size = constraints.maxWidth;
+                      return Container(
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey[300]!),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            ClipRRect(
+                              borderRadius: const BorderRadius.only(
+                                topLeft: Radius.circular(16),
+                                topRight: Radius.circular(16),
+                              ),
+                              child: SizedBox(
+                                height: size,
+                                width: size,
+                                child: MapWidget(event: _currentEvent!),
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    _isEventOngoing ? "En cours..." : "À venir...",
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.amber,
+                                      fontWeight: FontWeight.w600
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    _currentEvent!.name,
+                                    style: const TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
                 ),
               const SizedBox(height: 32),
               Column(

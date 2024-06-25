@@ -1,12 +1,36 @@
+import 'package:firebase_dynamic_links/firebase_dynamic_links.dart';
+import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:festitrack/models/event_model.dart';
 import 'package:festitrack/screens/map_widget.dart';
-import 'package:flutter/material.dart';
+import 'package:share_plus/share_plus.dart';
+import 'add_participant_screen.dart';  // Import the new screen
 
 class EventDetailScreen extends StatelessWidget {
   final Event event;
 
   const EventDetailScreen({super.key, required this.event});
+
+  Future<void> _createDynamicLink(BuildContext context) async {
+    final DynamicLinkParameters parameters = DynamicLinkParameters(
+      uriPrefix: 'https://festitrack.page.link',
+      link: Uri.parse('https://festitrack.page.link/invite?eventId=${event.id}'),
+      androidParameters: AndroidParameters(
+        packageName: 'com.festitrack.app',
+        minimumVersion: 0,
+      ),
+      iosParameters: IOSParameters(
+        bundleId: 'com.example.festitrack',
+        minimumVersion: '0',
+      ),
+    );
+
+    final ShortDynamicLink dynamicUrl = await FirebaseDynamicLinks.instance.buildShortLink(parameters);
+    final Uri shortUrl = dynamicUrl.shortUrl;
+
+    Share.share('Join my event called ${event.name}\n$shortUrl');
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -18,14 +42,14 @@ class EventDetailScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 const Text(
-                            "En cours...",
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.amber,
-                              fontWeight: FontWeight.w600
-                            ),
-                          ),
-                          SizedBox(height: 4,),
+                  "En cours...",
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.amber,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                SizedBox(height: 4),
                 Text(
                   event.name,
                   style: const TextStyle(
@@ -37,6 +61,12 @@ class EventDetailScreen extends StatelessWidget {
             ),
           ],
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.share),
+            onPressed: () => _createDynamicLink(context),
+          ),
+        ],
       ),
       body: SafeArea(
         child: SingleChildScrollView(
@@ -66,7 +96,6 @@ class EventDetailScreen extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          
                           Text(
                             "Localisation des membres",
                             style: const TextStyle(
@@ -92,6 +121,15 @@ class EventDetailScreen extends StatelessWidget {
                                   : const Text("à 5m"),
                             );
                           }).toList(),
+                          ElevatedButton(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(builder: (context) => AddParticipantScreen(eventId: event.id)),
+                              );
+                            },
+                            child: Text('Add Participant'),
+                          ),
                         ],
                       ),
                     ),
