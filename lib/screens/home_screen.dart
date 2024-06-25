@@ -1,9 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:festitrack/screens/create_event_screen.dart';
-import 'package:festitrack/screens/map_screen.dart';
+import 'package:festitrack/screens/map_widget.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:permission_handler/permission_handler.dart';
 
 class HomeScreen extends StatefulWidget {
   final User user;
@@ -17,13 +16,11 @@ class HomeScreen extends StatefulWidget {
 class _HomeScreenState extends State<HomeScreen> {
   bool _isEventOngoing = false;
   String? _eventId;
-  bool _hasLocationPermission = false;
 
   @override
   void initState() {
     super.initState();
     _checkEventStatus();
-    _requestLocationPermission();
   }
 
   Future<void> _checkEventStatus() async {
@@ -46,22 +43,7 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  Future<void> _requestLocationPermission() async {
-    PermissionStatus permission = await Permission.location.request();
 
-    if (permission.isGranted) {
-      setState(() {
-        _hasLocationPermission = true;
-      });
-    } else {
-      // Handle the case when permission is not granted
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Location permission is required to use this feature.'),
-        ),
-      );
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -85,9 +67,8 @@ class _HomeScreenState extends State<HomeScreen> {
                   SizedBox(
                     height: 100,
                     width: 100,
-                    child: _hasLocationPermission
-                        ? MapScreen(eventId: _eventId)
-                        : const Center(child: CircularProgressIndicator()),
+                    child: MapWidget(eventId: _eventId)
+                     ,
                   ),
                     const Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
