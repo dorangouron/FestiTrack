@@ -8,7 +8,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 class GpsTracking extends StatefulWidget {
   final String eventId;
 
-  GpsTracking({required this.eventId});
+  const GpsTracking({super.key, required this.eventId});
 
   @override
   _GpsTrackingState createState() => _GpsTrackingState();
@@ -17,7 +17,7 @@ class GpsTracking extends StatefulWidget {
 class _GpsTrackingState extends State<GpsTracking> {
   GoogleMapController? _controller;
   Position? _currentPosition;
-  List<LatLng> _positions = [];
+  final List<LatLng> _positions = [];
 
   @override
   void initState() {
@@ -33,14 +33,12 @@ class _GpsTrackingState extends State<GpsTracking> {
 
     Geolocator.getPositionStream(locationSettings: locationSettings).listen(
       (Position position) async {
-        if (position != null) {
-          setState(() {
-            _currentPosition = position;
-            _positions.add(LatLng(position.latitude, position.longitude));
-          });
-          await _savePosition(position);
-        }
-      },
+        setState(() {
+          _currentPosition = position;
+          _positions.add(LatLng(position.latitude, position.longitude));
+        });
+        await _savePosition(position);
+            },
     );
 
     // Timer to ensure positions are collected every 5 minutes
@@ -69,9 +67,9 @@ class _GpsTrackingState extends State<GpsTracking> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Tracking")),
+      appBar: AppBar(title: const Text("Tracking")),
       body: _currentPosition == null
-          ? Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator())
           : GoogleMap(
               onMapCreated: (controller) => _controller = controller,
               initialCameraPosition: CameraPosition(

@@ -1,12 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 
 class MapScreen extends StatefulWidget {
   final String? eventId;
 
-  MapScreen({this.eventId});
+  const MapScreen({super.key, this.eventId});
 
   @override
   _MapScreenState createState() => _MapScreenState();
@@ -38,7 +37,7 @@ class _MapScreenState extends State<MapScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: _currentPosition == null
-          ? Center(child: CircularProgressIndicator())
+          ? const Center(child: CircularProgressIndicator())
           : GoogleMap(
               onMapCreated: (controller) => _controller = controller,
               initialCameraPosition: CameraPosition(

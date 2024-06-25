@@ -3,6 +3,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 
 class CreateEventScreen extends StatefulWidget {
+  const CreateEventScreen({super.key});
+
   @override
   _CreateEventScreenState createState() => _CreateEventScreenState();
 }
@@ -46,16 +48,16 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("Create Event")),
+      appBar: AppBar(title: const Text("Create Event")),
       body: Padding(
-        padding: EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(16.0),
         child: Form(
           key: _formKey,
           child: Column(
             children: <Widget>[
               TextFormField(
                 controller: _nameController,
-                decoration: InputDecoration(labelText: 'Event Name'),
+                decoration: const InputDecoration(labelText: 'Event Name'),
                 validator: (value) {
                   if (value!.isEmpty) {
                     return 'Please enter a name';
@@ -63,7 +65,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                   return null;
                 },
               ),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               Row(
                 children: <Widget>[
                   Expanded(
@@ -71,26 +73,26 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
                       title: Text(_startDate == null
                           ? 'Start Date'
                           : DateFormat.yMd().format(_startDate!)),
-                      trailing: Icon(Icons.calendar_today),
+                      trailing: const Icon(Icons.calendar_today),
                       onTap: () => _selectDate(context, true),
                     ),
                   ),
-                  SizedBox(width: 20),
+                  const SizedBox(width: 20),
                   Expanded(
                     child: ListTile(
                       title: Text(_endDate == null
                           ? 'End Date'
                           : DateFormat.yMd().format(_endDate!)),
-                      trailing: Icon(Icons.calendar_today),
+                      trailing: const Icon(Icons.calendar_today),
                       onTap: () => _selectDate(context, false),
                     ),
                   ),
                 ],
               ),
-              SizedBox(height: 20),
+              const SizedBox(height: 20),
               ElevatedButton(
                 onPressed: _createEvent,
-                child: Text('Create Event'),
+                child: const Text('Create Event'),
               ),
             ],
           ),
