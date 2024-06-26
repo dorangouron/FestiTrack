@@ -28,7 +28,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
           gpsPoints: [],
         );
 
-        final eventId = Uuid().v4();
+        final eventId = const Uuid().v4();
         final event = Event(
           id: eventId,
           name: _nameController.text,

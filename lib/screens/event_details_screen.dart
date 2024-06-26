@@ -1,7 +1,5 @@
 import 'package:firebase_dynamic_links/firebase_dynamic_links.dart';
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:festitrack/models/event_model.dart';
 import 'package:festitrack/screens/map_widget.dart';
 import 'package:share_plus/share_plus.dart';
@@ -16,11 +14,11 @@ class EventDetailScreen extends StatelessWidget {
     final DynamicLinkParameters parameters = DynamicLinkParameters(
       uriPrefix: 'https://festitrack.page.link',
       link: Uri.parse('https://festitrack.page.link/invite?eventId=${event.id}'),
-      androidParameters: AndroidParameters(
+      androidParameters: const AndroidParameters(
         packageName: 'com.festitrack.app',
         minimumVersion: 0,
       ),
-      iosParameters: IOSParameters(
+      iosParameters: const IOSParameters(
         bundleId: 'com.example.festitrack',
         minimumVersion: '0',
       ),
@@ -49,7 +47,7 @@ class EventDetailScreen extends StatelessWidget {
                     fontWeight: FontWeight.w600,
                   ),
                 ),
-                SizedBox(height: 4),
+                const SizedBox(height: 4),
                 Text(
                   event.name,
                   style: const TextStyle(
@@ -96,9 +94,9 @@ class EventDetailScreen extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
+                          const Text(
                             "Localisation des membres",
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.w600,
                             ),
@@ -120,7 +118,7 @@ class EventDetailScreen extends StatelessWidget {
                                   ? null
                                   : const Text("à 5m"),
                             );
-                          }).toList(),
+                          }),
                           ElevatedButton(
                             onPressed: () {
                               Navigator.push(
@@ -128,7 +126,7 @@ class EventDetailScreen extends StatelessWidget {
                                 MaterialPageRoute(builder: (context) => AddParticipantScreen(eventId: event.id)),
                               );
                             },
-                            child: Text('Add Participant'),
+                            child: const Text('Add Participant'),
                           ),
                         ],
                       ),

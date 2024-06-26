@@ -50,7 +50,7 @@ class _AddParticipantScreenState extends State<AddParticipantScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Add Participant'),
+        title: const Text('Add Participant'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -61,7 +61,7 @@ class _AddParticipantScreenState extends State<AddParticipantScreen> {
               decoration: InputDecoration(
                 labelText: 'Search by name',
                 suffixIcon: IconButton(
-                  icon: Icon(Icons.search),
+                  icon: const Icon(Icons.search),
                   onPressed: _searchUsers,
                 ),
               ),
@@ -74,7 +74,7 @@ class _AddParticipantScreenState extends State<AddParticipantScreen> {
                   return ListTile(
                     title: Text(user.displayName ?? ''),
                     trailing: IconButton(
-                      icon: Icon(Icons.add),
+                      icon: const Icon(Icons.add),
                       onPressed: () => _addUserToEvent(user),
                     ),
                   );

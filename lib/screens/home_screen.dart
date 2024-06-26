@@ -28,7 +28,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 Future<void> signOut(BuildContext context) async {
   await FirebaseAuth.instance.signOut();
-  Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => SignInScreen())); // Ensure you have a LoginScreen to navigate to
+  Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => const SignInScreen())); // Ensure you have a LoginScreen to navigate to
 }
   Future<void> _fetchEvents() async {
     final now = DateTime.now();
@@ -188,7 +188,7 @@ Future<void> signOut(BuildContext context) async {
                       ? const Text("Pas d'évènements à venir")
                       : ListView.builder(
                           shrinkWrap: true,
-                          physics: NeverScrollableScrollPhysics(),
+                          physics: const NeverScrollableScrollPhysics(),
                           itemCount: _upcomingEvents.length,
                           itemBuilder: (context, index) {
                             final event = _upcomingEvents[index];

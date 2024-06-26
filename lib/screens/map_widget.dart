@@ -20,7 +20,7 @@ class _MapWidgetState extends State<MapWidget> {
     return Scaffold(
       body: GoogleMap(
         onMapCreated: (controller) => _controller = controller,
-        initialCameraPosition: CameraPosition(
+        initialCameraPosition: const CameraPosition(
           target: _franceLatLng,
           zoom: 5, // Adjust the zoom level as needed
         ),
