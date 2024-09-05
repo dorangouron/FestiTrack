@@ -124,7 +124,7 @@ Future<void> signOut(BuildContext context) async {
                               child: SizedBox(
                                 height: size,
                                 width: size,
-                                child: MapWidget(event: _currentEvent!),
+                                child: MapWidget(event: _currentEvent!, isInteractive: false),
                               ),
                             ),
                             Padding(

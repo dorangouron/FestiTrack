@@ -19,18 +19,12 @@
 	</dict>
 </array>
 
-<!-- End of the Google Sign-in Section -->
   <key>NSLocationWhenInUseUsageDescription</key>
-  <string>We need your location to provide the best experience</string>
+  <string>We need your location to show your position on the map to your friend during the event.</string>
   <key>NSLocationAlwaysUsageDescription</key>
-  <string>We need your location to provide the best experience</string>
-
-  <key>NSLocationWhenInUseUsageDescription</key>
-  <string>We need your location to show your position on the map.</string>
-  <key>NSLocationAlwaysUsageDescription</key>
-  <string>We need your location to show your position on the map.</string>
+  <string>We need your location to show your position on the map to your friend during the event.</string>
   <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-  <string>We need your location to show your position on the map.</string>
+  <string>We need your location to show your position on the map to your friend during the event.</string>
   
   <key>CADisableMinimumFrameDurationOnPhone</key>
   <true/>

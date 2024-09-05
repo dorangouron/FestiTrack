@@ -86,7 +86,7 @@ class EventDetailScreen extends StatelessWidget {
                       child: SizedBox(
                         height: 500,
                         width: double.infinity,
-                        child: MapWidget(event: event),
+                        child: MapWidget(event: event, isInteractive: true,),
                       ),
                     ),
                     Padding(

@@ -19,10 +19,11 @@ dependencies:
   cloud_firestore: any
   intl: any
   google_sign_in_ios: ^5.7.6
-  permission_handler: any
+  permission_handler: ^11.3.1
   uuid: ^4.4.0
   firebase_dynamic_links: ^6.0.2
   share_plus: ^9.0.0
+  location: ^7.0.0
 
 dev_dependencies:
   flutter_test:

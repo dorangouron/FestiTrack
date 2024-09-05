@@ -25,32 +25,32 @@ class _GpsTrackingState extends State<GpsTracking> {
     _startTracking();
   }
 
-  Future<void> _startTracking() async {
-    const LocationSettings locationSettings = LocationSettings(
-      accuracy: LocationAccuracy.high,
-      distanceFilter: 0,
-    );
+Future<void> _startTracking() async {
+  LocationPermission permission = await Geolocator.checkPermission();
+  if (permission == LocationPermission.denied) {
+    permission = await Geolocator.requestPermission();
+    if (permission == LocationPermission.denied) {
+      // Handle the case where the user denied the permission
+      return;
+    }
+  }
 
-    Geolocator.getPositionStream(locationSettings: locationSettings).listen(
-      (Position position) async {
-        setState(() {
-          _currentPosition = position;
-          _positions.add(LatLng(position.latitude, position.longitude));
-        });
-        await _savePosition(position);
-            },
-    );
+  const LocationSettings locationSettings = LocationSettings(
+    accuracy: LocationAccuracy.high,
+    distanceFilter: 0,
+  );
 
-    // Timer to ensure positions are collected every 5 minutes
-    Timer.periodic(const Duration(minutes: 5), (Timer t) async {
-      Position position = await Geolocator.getCurrentPosition(desiredAccuracy: LocationAccuracy.high);
+  Geolocator.getPositionStream(locationSettings: locationSettings).listen(
+    (Position position) async {
       setState(() {
         _currentPosition = position;
         _positions.add(LatLng(position.latitude, position.longitude));
       });
       await _savePosition(position);
-    });
-  }
+    },
+  );
+}
+
 
   Future<void> _savePosition(Position position) async {
     await FirebaseFirestore.instance
