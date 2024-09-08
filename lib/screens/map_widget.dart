@@ -8,7 +8,8 @@ class MapWidget extends StatefulWidget {
   final Event event;
   final bool isInteractive;
 
-  const MapWidget({super.key, required this.event, required this.isInteractive});
+  const MapWidget(
+      {super.key, required this.event, required this.isInteractive});
 
   @override
   _MapWidgetState createState() => _MapWidgetState();
@@ -28,7 +29,9 @@ class _MapWidgetState extends State<MapWidget> {
 
   // Vérifie et demande les permissions de localisation
   Future<void> _checkLocationPermission() async {
-    bool hasPermission = await LocationPermissionHandler().checkAndRequestLocationPermission(context);
+    bool hasPermission = await LocationPermissionHandler()
+        .checkAndRequestLocationPermission(context);
+    print(hasPermission);
 
     if (hasPermission) {
       _startTracking();
@@ -41,6 +44,7 @@ class _MapWidgetState extends State<MapWidget> {
   Future<void> _startTracking() async {
     // Récupère la position initiale
     _currentPosition = await _location.getLocation();
+    print(_currentPosition);
 
     // Écoute les changements de position en temps réel
     _location.onLocationChanged.listen((LocationData newPosition) {
@@ -48,7 +52,8 @@ class _MapWidgetState extends State<MapWidget> {
         _currentPosition = newPosition;
         _positions.add(LatLng(newPosition.latitude!, newPosition.longitude!));
       });
-      _savePosition(newPosition); // Sauvegarde la position dans Firestore ou autre
+      _savePosition(
+          newPosition); // Sauvegarde la position dans Firestore ou autre
     });
   }
 
@@ -62,12 +67,15 @@ class _MapWidgetState extends State<MapWidget> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: _currentPosition == null
-          ? const Center(child: CircularProgressIndicator()) // Si la position n'est pas encore disponible
+          ? const Center(
+              child:
+                  CircularProgressIndicator()) // Si la position n'est pas encore disponible
           : GoogleMap(
               scrollGesturesEnabled: widget.isInteractive,
               onMapCreated: (controller) => _controller = controller,
               initialCameraPosition: CameraPosition(
-                target: LatLng(_currentPosition!.latitude!, _currentPosition!.longitude!),
+                target: LatLng(
+                    _currentPosition!.latitude!, _currentPosition!.longitude!),
                 zoom: 15, // Zoom de départ, ajusté à la position actuelle
               ),
               myLocationButtonEnabled: false,
