@@ -24,6 +24,7 @@ class _MapWidgetState extends State<MapWidget> {
   GoogleMapController? _controller;
   LocationData? _currentPosition;
   final Location _location = Location();
+  Timer? _timer;
   final Map<String, List<LatLng>> _participantPositions = {};
   final int _maxPositions = 5;
   LatLng? _lastKnownPosition;
@@ -38,6 +39,7 @@ class _MapWidgetState extends State<MapWidget> {
 
   @override
   void dispose() {
+    _timer?.cancel(); // Annule le timer lorsque le widget est détruit
     _positionStreamSubscription?.cancel();
     super.dispose();
   }
@@ -50,18 +52,21 @@ class _MapWidgetState extends State<MapWidget> {
     }
   }
 
-  // Démarre le suivi de la position GPS
+  // Démarre le suivi de la position GPS toutes les deux minutes
   Future<void> _startTracking() async {
+    // Récupère la position initiale
     _currentPosition = await _location.getLocation();
-    // Utiliser addPostFrameCallback pour accéder à l'utilisateur après la construction
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _savePosition(_currentPosition!); // Enregistre immédiatement la position
     });
 
-    // Continue à suivre les changements de position
-    _location.onLocationChanged.listen((LocationData newPosition) {
-      _currentPosition = newPosition;
-      _savePosition(newPosition); // Enregistre à chaque changement
+    // Démarre un timer qui met à jour la position toutes les deux minutes
+    _timer = Timer.periodic(const Duration(minutes: 2), (Timer timer) async {
+      LocationData newPosition = await _location.getLocation();
+      setState(() {
+        _currentPosition = newPosition;
+      });
+      _savePosition(newPosition); // Sauvegarde la nouvelle position
     });
   }
 
@@ -70,7 +75,7 @@ class _MapWidgetState extends State<MapWidget> {
     try {
       final userProvider = Provider.of<UserProvider>(context, listen: false);
       final user = userProvider.user;
-      
+
       if (user == null) {
         print("User not logged in yet.");
         return; // Ne rien faire si l'utilisateur n'est pas encore chargé
