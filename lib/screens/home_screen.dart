@@ -4,13 +4,14 @@ import 'package:festitrack/screens/create_event_screen.dart';
 import 'package:festitrack/screens/event_details_screen.dart';
 import 'package:festitrack/screens/map_widget.dart';
 import 'package:festitrack/screens/sign_in_screen.dart';
+import 'package:festitrack/services/user_provider.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
 class HomeScreen extends StatefulWidget {
-  final User user;
 
-  const HomeScreen({super.key, required this.user});
+  const HomeScreen({super.key});
 
   @override
   _HomeScreenState createState() => _HomeScreenState();
@@ -20,64 +21,87 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isEventOngoing = false;
   Event? _currentEvent;
   List<Event> _upcomingEvents = [];
+  bool _initialized = false;
 
   @override
-  void initState() {
-    super.initState();
-    _fetchEvents();
-  }
-Future<void> signOut(BuildContext context) async {
-  await FirebaseAuth.instance.signOut();
-  Navigator.of(context).pushReplacement(MaterialPageRoute(builder: (context) => const SignInScreen())); // Ensure you have a LoginScreen to navigate to
-}
-  Future<void> _fetchEvents() async {
-    final now = DateTime.now();
-    final userId = widget.user.uid;
+  void didChangeDependencies() {
+    super.didChangeDependencies();
 
-    try {
-      print('Fetching events...');
-      final query = await FirebaseFirestore.instance.collection('events').get();
-
-      final events = query.docs.map((doc) => Event.fromMap(doc.data())).toList();
-
-      final ongoingEvents = events.where((event) {
-        return event.start.isBefore(now) && event.end.isAfter(now);
-      }).toList();
-
-      final upcomingEvents = events.where((event) {
-        return event.start.isAfter(now);
-      }).toList();
-
-      final userUpcomingEvents = upcomingEvents.where((event) {
-        return event.participants.any((participant) => participant.id == userId);
-      }).toList();
-
-      print('Ongoing events: ${ongoingEvents.length}');
-      print('Upcoming events: ${userUpcomingEvents.length}');
-
-      setState(() {
-        if (ongoingEvents.isNotEmpty) {
-          _isEventOngoing = true;
-          _currentEvent = ongoingEvents.first;
-        } else if (userUpcomingEvents.isNotEmpty) {
-          _isEventOngoing = false;
-          _currentEvent = userUpcomingEvents.first;
-        }
-        _upcomingEvents = userUpcomingEvents;
-      });
-    } catch (e) {
-      print('Error fetching events: $e');
+    // Appelle _fetchEvents une seule fois après que les dépendances soient disponibles
+    if (!_initialized) {
+      _fetchEvents();
+      _initialized = true;
     }
   }
 
+  Future<void> signOut(BuildContext context) async {
+    await FirebaseAuth.instance.signOut();
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(builder: (context) => const SignInScreen()),
+    );
+  }
+
+Future<void> _fetchEvents() async {
+  final now = DateTime.now();
+  
+  // Vérifie si l'utilisateur est défini avant de continuer
+  final userProvider = Provider.of<UserProvider>(context, listen: false);
+  final user = userProvider.user;
+  
+  if (user == null) {
+    print("L'utilisateur n'est pas encore défini.");
+    return; // Retourne sans exécuter la logique de fetch si l'utilisateur est null
+  }
+
+  final userId = user.uid;
+
+  try {
+    print('Fetching events...');
+    final query = await FirebaseFirestore.instance.collection('events').get();
+
+    final events = query.docs.map((doc) => Event.fromMap(doc.data())).toList();
+
+    final ongoingEvents = events.where((event) {
+      return event.start.isBefore(now) && event.end.isAfter(now);
+    }).toList();
+
+    final upcomingEvents = events.where((event) {
+      return event.start.isAfter(now);
+    }).toList();
+
+    final userUpcomingEvents = upcomingEvents.where((event) {
+      return event.participants.any((participant) => participant.id == userId);
+    }).toList();
+
+    print('Ongoing events: ${ongoingEvents.length}');
+    print('Upcoming events: ${userUpcomingEvents.length}');
+
+    setState(() {
+      if (ongoingEvents.isNotEmpty) {
+        _isEventOngoing = true;
+        _currentEvent = ongoingEvents.first;
+      } else if (userUpcomingEvents.isNotEmpty) {
+        _isEventOngoing = false;
+        _currentEvent = userUpcomingEvents.first;
+      }
+      _upcomingEvents = userUpcomingEvents;
+    });
+  } catch (e) {
+    print('Error fetching events: $e');
+  }
+}
+
+
   @override
   Widget build(BuildContext context) {
+    final user = Provider.of<UserProvider>(context).user;
+
     return Scaffold(
       appBar: AppBar(
         title: Row(
           children: [
             Text(
-              "Hello ${widget.user.displayName} !",
+              "Hello ${user!.displayName} !",
               style: const TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 24,
@@ -100,10 +124,12 @@ Future<void> signOut(BuildContext context) async {
               if (_currentEvent != null)
                 GestureDetector(
                   onTap: () {
-                                    Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (context) =>  EventDetailScreen(event: _currentEvent!,)),
-                          );
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) =>
+                              EventDetailScreen(event: _currentEvent!)),
+                    );
                   },
                   child: LayoutBuilder(
                     builder: (context, constraints) {
@@ -124,7 +150,9 @@ Future<void> signOut(BuildContext context) async {
                               child: SizedBox(
                                 height: size,
                                 width: size,
-                                child: MapWidget(event: _currentEvent!, isInteractive: false),
+                                child: MapWidget(
+                                    event: _currentEvent!,
+                                    isInteractive: false),
                               ),
                             ),
                             Padding(
@@ -133,12 +161,13 @@ Future<void> signOut(BuildContext context) async {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Text(
-                                    _isEventOngoing ? "En cours..." : "À venir...",
+                                    _isEventOngoing
+                                        ? "En cours..."
+                                        : "À venir...",
                                     style: const TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.amber,
-                                      fontWeight: FontWeight.w600
-                                    ),
+                                        fontSize: 12,
+                                        color: Colors.amber,
+                                        fontWeight: FontWeight.w600),
                                   ),
                                   const SizedBox(height: 4),
                                   Text(
@@ -175,7 +204,9 @@ Future<void> signOut(BuildContext context) async {
                         onPressed: () {
                           Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (context) => const CreateEventScreen()),
+                            MaterialPageRoute(
+                                builder: (context) =>
+                                    const CreateEventScreen()),
                           ).then((value) {
                             _fetchEvents();
                           });
@@ -195,16 +226,18 @@ Future<void> signOut(BuildContext context) async {
                             return ListTile(
                               onTap: () {
                                 Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (context) =>  EventDetailScreen(event: event,)),
-                          );
+                                  context,
+                                  MaterialPageRoute(
+                                      builder: (context) =>
+                                          EventDetailScreen(event: event)),
+                                );
                               },
                               title: Text(event.name),
-                              subtitle: Text(event.participants.length>1 ? "${event.participants.length} participants" : "${event.participants.length} participant"),
+                              subtitle: Text(event.participants.length > 1
+                                  ? "${event.participants.length} participants"
+                                  : "${event.participants.length} participant"),
                               trailing: IconButton(
-                                onPressed: () {
-                                  
-                                },
+                                onPressed: () {},
                                 icon: const Icon(Icons.share),
                               ),
                             );

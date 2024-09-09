@@ -1,10 +1,14 @@
 import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:festitrack/models/gps_point_model.dart';
+import 'package:festitrack/models/participant_model.dart';
 import 'package:festitrack/models/event_model.dart';
 import 'package:festitrack/services/location_permission_handlers.dart';
+import 'package:festitrack/services/user_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:location/location.dart';
+import 'package:provider/provider.dart';
 
 class MapWidget extends StatefulWidget {
   final Event event;
@@ -20,132 +24,165 @@ class _MapWidgetState extends State<MapWidget> {
   GoogleMapController? _controller;
   LocationData? _currentPosition;
   final Location _location = Location();
-  Timer? _timer;
   final Map<String, List<LatLng>> _participantPositions = {};
   final int _maxPositions = 5;
+  LatLng? _lastKnownPosition;
+  StreamSubscription? _positionStreamSubscription;
 
   @override
   void initState() {
     super.initState();
-    print("MapWidget initialized"); // Log 1: Initialisation
     _checkLocationPermission();
+    _listenToFirestoreUpdates(); // Écoute les mises à jour de Firestore
   }
 
   @override
   void dispose() {
-    _timer?.cancel();
+    _positionStreamSubscription?.cancel();
     super.dispose();
   }
 
   // Vérifie et demande les permissions de localisation
   Future<void> _checkLocationPermission() async {
-    print("Checking location permission..."); // Log 2: Vérification des permissions
     bool hasPermission = await LocationPermissionHandler().checkAndRequestLocationPermission(context);
-
-    print("Location permission status: $hasPermission"); // Log 3: Résultat de la vérification des permissions
-
     if (hasPermission) {
       _startTracking();
-    } else {
-      print("Location permission denied."); // Log 4: Permission refusée
     }
   }
 
-  // Démarre le suivi de la position GPS toutes les 2 minutes, si l'événement est en cours
+  // Démarre le suivi de la position GPS
   Future<void> _startTracking() async {
-    print("Starting GPS tracking..."); // Log 5: Démarrage du suivi
+    _currentPosition = await _location.getLocation();
+    _savePosition(_currentPosition!); // Enregistre immédiatement la position
 
-    if (DateTime.now().isAfter(widget.event.start) && DateTime.now().isBefore(widget.event.end)) {
-      print("Event is currently active."); // Log 6: L'événement est en cours
-
-      _currentPosition = await _location.getLocation();
-      print("Initial location: ${_currentPosition!.latitude}, ${_currentPosition!.longitude}"); // Log 7: Position initiale
-
-      setState(() {}); // Met à jour l'interface avec la position initiale
-
-      // Sauvegarde les positions toutes les 2 minutes
-      _timer = Timer.periodic(const Duration(seconds: 10), (timer) async {
-        LocationData newPosition = await _location.getLocation();
-        print("New position: ${newPosition.latitude}, ${newPosition.longitude}"); // Log 8: Nouvelle position
-        setState(() {
-          _currentPosition = newPosition;
-        });
-
-        await _savePosition(newPosition);
-      });
-    } else {
-      print("Event is not active."); // Log 9: L'événement n'est pas en cours
-    }
+    // Continue à suivre les changements de position
+    _location.onLocationChanged.listen((LocationData newPosition) {
+      _currentPosition = newPosition;
+      _savePosition(newPosition); // Enregistre à chaque changement
+    });
   }
 
-  // Sauvegarde la position dans Firestore et conserve uniquement les 5 dernières
+  // Sauvegarde la position de l'utilisateur dans Firestore en respectant la structure du modèle
   Future<void> _savePosition(LocationData position) async {
     try {
-      print("Saving position to Firestore..."); // Log 10: Début de la sauvegarde
+      final participantId =   Provider.of<UserProvider>(context).user!.uid;
+; // Remplace par l'ID actuel du participant
+      final gpsPoint = GPSPoint(
+        latitude: position.latitude!,
+        longitude: position.longitude!,
+        creationDate: DateTime.now(),
+      );
 
-      String participantId = 'participant-id'; // Remplace par l'ID actuel du participant
-      LatLng latLng = LatLng(position.latitude!, position.longitude!);
+      // Récupère les positions actuelles du participant
+      DocumentReference eventRef = FirebaseFirestore.instance.collection('events').doc(widget.event.id);
+      DocumentSnapshot eventSnapshot = await eventRef.get();
 
-      // Ajoute la position à la liste des positions du participant
-      if (_participantPositions.containsKey(participantId)) {
-        _participantPositions[participantId]!.add(latLng);
-        if (_participantPositions[participantId]!.length > _maxPositions) {
-          _participantPositions[participantId]!.removeAt(0);
+      if (eventSnapshot.exists) {
+        Map<String, dynamic> eventData = eventSnapshot.data() as Map<String, dynamic>;
+        Event event = Event.fromMap(eventData);
+
+        // Trouver le participant actuel
+        Participant? currentParticipant = event.participants.firstWhere(
+          (p) => p.id == participantId,
+          orElse: () => Participant(id: participantId, gpsPoints: []),
+        );
+
+        // Met à jour les positions GPS du participant (conserve seulement les 5 dernières)
+        currentParticipant.gpsPoints.add(gpsPoint);
+        if (currentParticipant.gpsPoints.length > _maxPositions) {
+          currentParticipant.gpsPoints.removeAt(0); // Supprime la plus ancienne
         }
-      } else {
-        _participantPositions[participantId] = [latLng];
+
+        // Met à jour l'événement avec les nouvelles positions
+        event.participants.removeWhere((p) => p.id == participantId);
+        event.participants.add(currentParticipant);
+
+        // Sauvegarde dans Firestore
+        await eventRef.set(event.toMap());
+
+        print("Position saved and updated in Firestore.");
       }
-
-      // Sauvegarde dans Firestore
-      await FirebaseFirestore.instance.collection('events').doc(widget.event.id).collection('positions').add({
-        'participantId': participantId,
-        'latitude': position.latitude,
-        'longitude': position.longitude,
-        'timestamp': FieldValue.serverTimestamp(),
-      });
-
-      print("Position saved successfully!"); // Log 11: Sauvegarde réussie
     } catch (e) {
-      print("Error saving position: $e"); // Log 12: Erreur de sauvegarde
+      print("Error saving position: $e");
     }
   }
 
-  // Génère des couleurs différentes pour les traces de chaque participant
-  Color _getColorForParticipant(String participantId) {
-    return Colors.primaries[participantId.hashCode % Colors.primaries.length];
+  // Écoute les mises à jour de la base de données Firestore en temps réel
+  void _listenToFirestoreUpdates() {
+    _positionStreamSubscription = FirebaseFirestore.instance
+        .collection('events')
+        .doc(widget.event.id)
+        .snapshots()
+        .listen((snapshot) {
+      if (snapshot.exists) {
+        Map<String, dynamic> data = snapshot.data() as Map<String, dynamic>;
+        Event event = Event.fromMap(data);
+
+        setState(() {
+          _participantPositions.clear(); // Réinitialise les positions des participants
+
+          // Récupère uniquement la dernière position de chaque participant
+          for (Participant participant in event.participants) {
+            if (participant.gpsPoints.isNotEmpty) {
+              GPSPoint lastPoint = participant.gpsPoints.last;
+              LatLng lastPosition = LatLng(lastPoint.latitude, lastPoint.longitude);
+
+              // Ajoute la dernière position du participant
+              _participantPositions[participant.id] = [lastPosition];
+            }
+          }
+        });
+
+        // Centre la carte sur la dernière position connue de l'utilisateur
+        if (_currentPosition != null) {
+          _controller?.animateCamera(CameraUpdate.newLatLng(
+              LatLng(_currentPosition!.latitude!, _currentPosition!.longitude!)));
+        }
+      }
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    print("Building the map..."); // Log 13: Construction de la carte
-    return Scaffold(
-      body: _currentPosition == null
-          ? const Center(child: CircularProgressIndicator()) // Si la position n'est pas encore disponible
-          : GoogleMap(
-              scrollGesturesEnabled: widget.isInteractive,
-              onMapCreated: (controller) {
-                _controller = controller;
-                print("Map created."); // Log 14: Carte créée
-              },
-              initialCameraPosition: CameraPosition(
-                target: LatLng(_currentPosition!.latitude!, _currentPosition!.longitude!),
-                zoom: 15,
-              ),
-              //myLocationButtonEnabled: false,
-              markers: _buildMarkers(),
-              polylines: _buildPolylines(),
-            ),
+        final user = Provider.of<UserProvider>(context).user;
 
+    return Scaffold(
+      body: GoogleMap(
+        scrollGesturesEnabled: widget.isInteractive,
+        onMapCreated: (controller) {
+          _controller = controller;
+          if (_currentPosition != null) {
+            _controller?.animateCamera(CameraUpdate.newLatLng(
+                LatLng(_currentPosition!.latitude!, _currentPosition!.longitude!)));
+          }
+        },
+        initialCameraPosition: CameraPosition(
+          target: _lastKnownPosition ?? const LatLng(0.0, 0.0), // Default to (0, 0) if no position is known
+          zoom: 15,
+        ),
+        myLocationButtonEnabled: false,
+        markers: _buildMarkers(),
+        polylines: _buildPolylines(),
+      ),
+
+      // Bouton pour rafraîchir les permissions de localisation
+      floatingActionButton: widget.isInteractive
+          ? FloatingActionButton(
+              backgroundColor: Colors.white,
+              onPressed: _checkLocationPermission,
+              child: const Icon(Icons.refresh, color: Colors.black),
+            )
+          : null,
     );
   }
 
-  // Construit les marqueurs pour chaque position enregistrée
+  // Construit les marqueurs pour la dernière position de chaque participant
   Set<Marker> _buildMarkers() {
-    print("Building markers..."); // Log 15: Construction des marqueurs
     Set<Marker> markers = {};
 
     _participantPositions.forEach((participantId, positions) {
-      for (var position in positions) {
+      if (positions.isNotEmpty) {
+        var position = positions.last; // Utilise uniquement la dernière position
         markers.add(Marker(
           markerId: MarkerId('$participantId-${position.latitude}-${position.longitude}'),
           position: position,
@@ -159,18 +196,24 @@ class _MapWidgetState extends State<MapWidget> {
 
   // Construit les polylines pour afficher les traces des participants
   Set<Polyline> _buildPolylines() {
-    print("Building polylines..."); // Log 16: Construction des polylines
     Set<Polyline> polylines = {};
 
     _participantPositions.forEach((participantId, positions) {
-      polylines.add(Polyline(
-        polylineId: PolylineId(participantId),
-        points: positions,
-        color: _getColorForParticipant(participantId),
-        width: 4,
-      ));
+      if (positions.length > 1) {
+        polylines.add(Polyline(
+          polylineId: PolylineId(participantId),
+          points: positions,
+          color: _getColorForParticipant(participantId),
+          width: 4,
+        ));
+      }
     });
 
     return polylines;
+  }
+
+  // Génère des couleurs différentes pour les traces de chaque participant
+  Color _getColorForParticipant(String participantId) {
+    return Colors.primaries[participantId.hashCode % Colors.primaries.length];
   }
 }

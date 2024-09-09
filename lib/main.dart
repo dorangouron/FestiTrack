@@ -1,8 +1,8 @@
-import 'package:festitrack/screens/sign_in_screen.dart';
-import 'package:festitrack/screens/home_screen.dart';
+import 'package:festitrack/services/auth_wrapper.dart';
+import 'package:festitrack/services/user_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:provider/provider.dart'; // Import du package provider
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -15,28 +15,13 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
-      home: AuthWrapper(),
-    );
-  }
-}
-
-class AuthWrapper extends StatelessWidget {
-  const AuthWrapper({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return StreamBuilder<User?>(
-      stream: FirebaseAuth.instance.authStateChanges(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator());
-        } else if (snapshot.hasData) {
-          return HomeScreen(user: snapshot.data!);
-        } else {
-          return const SignInScreen();
-        }
-      },
+    return MultiProvider(
+      providers: [
+        ChangeNotifierProvider(create: (_) => UserProvider()), // Fournir le UserProvider
+      ],
+      child: const MaterialApp(
+        home: AuthWrapper(),
+      ),
     );
   }
 }
