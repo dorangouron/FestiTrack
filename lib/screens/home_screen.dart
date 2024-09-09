@@ -10,7 +10,6 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 class HomeScreen extends StatefulWidget {
-
   const HomeScreen({super.key});
 
   @override
@@ -41,67 +40,72 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-Future<void> _fetchEvents() async {
-  final now = DateTime.now();
-  
-  // Vérifie si l'utilisateur est défini avant de continuer
-  final userProvider = Provider.of<UserProvider>(context, listen: false);
-  final user = userProvider.user;
-  
-  if (user == null) {
-    print("L'utilisateur n'est pas encore défini.");
-    return; // Retourne sans exécuter la logique de fetch si l'utilisateur est null
+  Future<void> _fetchEvents() async {
+    final now = DateTime.now();
+
+    // Vérifie si l'utilisateur est défini avant de continuer
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+    final user = userProvider.user;
+
+    if (user == null) {
+      print("L'utilisateur n'est pas encore défini.");
+      return; // Retourne sans exécuter la logique de fetch si l'utilisateur est null
+    }
+
+    final userId = user.uid;
+
+    try {
+      print('Fetching events...');
+      final query = await FirebaseFirestore.instance.collection('events').get();
+
+      final events = query.docs.map((doc) => Event.fromMap(doc.data())).toList();
+
+      final ongoingEvents = events.where((event) {
+        return event.start.isBefore(now) && event.end.isAfter(now);
+      }).toList();
+
+      final upcomingEvents = events.where((event) {
+        return event.start.isAfter(now);
+      }).toList();
+
+      final userUpcomingEvents = upcomingEvents.where((event) {
+        return event.participants.any((participant) => participant.id == userId);
+      }).toList();
+
+      print('Ongoing events: ${ongoingEvents.length}');
+      print('Upcoming events: ${userUpcomingEvents.length}');
+
+      setState(() {
+        if (ongoingEvents.isNotEmpty) {
+          _isEventOngoing = true;
+          _currentEvent = ongoingEvents.first;
+        } else if (userUpcomingEvents.isNotEmpty) {
+          _isEventOngoing = false;
+          _currentEvent = userUpcomingEvents.first;
+        }
+        _upcomingEvents = userUpcomingEvents;
+      });
+    } catch (e) {
+      print('Error fetching events: $e');
+    }
   }
-
-  final userId = user.uid;
-
-  try {
-    print('Fetching events...');
-    final query = await FirebaseFirestore.instance.collection('events').get();
-
-    final events = query.docs.map((doc) => Event.fromMap(doc.data())).toList();
-
-    final ongoingEvents = events.where((event) {
-      return event.start.isBefore(now) && event.end.isAfter(now);
-    }).toList();
-
-    final upcomingEvents = events.where((event) {
-      return event.start.isAfter(now);
-    }).toList();
-
-    final userUpcomingEvents = upcomingEvents.where((event) {
-      return event.participants.any((participant) => participant.id == userId);
-    }).toList();
-
-    print('Ongoing events: ${ongoingEvents.length}');
-    print('Upcoming events: ${userUpcomingEvents.length}');
-
-    setState(() {
-      if (ongoingEvents.isNotEmpty) {
-        _isEventOngoing = true;
-        _currentEvent = ongoingEvents.first;
-      } else if (userUpcomingEvents.isNotEmpty) {
-        _isEventOngoing = false;
-        _currentEvent = userUpcomingEvents.first;
-      }
-      _upcomingEvents = userUpcomingEvents;
-    });
-  } catch (e) {
-    print('Error fetching events: $e');
-  }
-}
-
 
   @override
   Widget build(BuildContext context) {
-    final user = Provider.of<UserProvider>(context).user;
+    final userProvider = Provider.of<UserProvider>(context);
+    final user = userProvider.user;
+
+    // Assure-toi que l'utilisateur est défini avant de rendre l'écran
+    if (user == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
 
     return Scaffold(
       appBar: AppBar(
         title: Row(
           children: [
             Text(
-              "Hello ${user!.displayName} !",
+              "Hello ${user.displayName ?? 'Utilisateur'} !",
               style: const TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 24,
@@ -208,7 +212,7 @@ Future<void> _fetchEvents() async {
                                 builder: (context) =>
                                     const CreateEventScreen()),
                           ).then((value) {
-                            _fetchEvents();
+                            _fetchEvents(); // Rafraîchir les événements après la création
                           });
                         },
                         child: const Icon(Icons.add),

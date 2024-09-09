@@ -53,7 +53,10 @@ class _MapWidgetState extends State<MapWidget> {
   // Démarre le suivi de la position GPS
   Future<void> _startTracking() async {
     _currentPosition = await _location.getLocation();
-    _savePosition(_currentPosition!); // Enregistre immédiatement la position
+    // Utiliser addPostFrameCallback pour accéder à l'utilisateur après la construction
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _savePosition(_currentPosition!); // Enregistre immédiatement la position
+    });
 
     // Continue à suivre les changements de position
     _location.onLocationChanged.listen((LocationData newPosition) {
@@ -65,8 +68,16 @@ class _MapWidgetState extends State<MapWidget> {
   // Sauvegarde la position de l'utilisateur dans Firestore en respectant la structure du modèle
   Future<void> _savePosition(LocationData position) async {
     try {
-      final participantId =   Provider.of<UserProvider>(context).user!.uid;
-; // Remplace par l'ID actuel du participant
+      final userProvider = Provider.of<UserProvider>(context, listen: false);
+      final user = userProvider.user;
+      
+      if (user == null) {
+        print("User not logged in yet.");
+        return; // Ne rien faire si l'utilisateur n'est pas encore chargé
+      }
+
+      final participantId = user.uid; // ID du participant
+
       final gpsPoint = GPSPoint(
         latitude: position.latitude!,
         longitude: position.longitude!,
@@ -144,7 +155,7 @@ class _MapWidgetState extends State<MapWidget> {
 
   @override
   Widget build(BuildContext context) {
-        final user = Provider.of<UserProvider>(context).user;
+    final user = Provider.of<UserProvider>(context).user;
 
     return Scaffold(
       body: GoogleMap(

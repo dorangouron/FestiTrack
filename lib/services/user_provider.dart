@@ -8,6 +8,9 @@ class UserProvider with ChangeNotifier {
 
   void setUser(User? user) {
     _user = user;
-    notifyListeners(); // Notifie les widgets écoutant ce provider
+    // Utilise addPostFrameCallback pour notifier les auditeurs après le cycle de build
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      notifyListeners();
+    });
   }
 }
