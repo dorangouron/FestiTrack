@@ -124,7 +124,18 @@ class _HomeScreenState extends State<HomeScreen> {
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(15.0),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
+              const Text(
+                        'Prochain évènement',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      SizedBox(
+                        height: 10,
+                      ),
               if (_currentEvent != null)
                 GestureDetector(
                   onTap: () {
@@ -155,25 +166,16 @@ class _HomeScreenState extends State<HomeScreen> {
                                 height: size,
                                 width: size,
                                 child: MapWidget(
-                                    event: _currentEvent!,
-                                    isInteractive: false),
+                                    eventId: _currentEvent!.id,
+                                ),
                               ),
                             ),
                             Padding(
-                              padding: const EdgeInsets.all(8.0),
+                              padding: const EdgeInsets.all(15.0),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(
-                                    _isEventOngoing
-                                        ? "En cours..."
-                                        : "À venir...",
-                                    style: const TextStyle(
-                                        fontSize: 12,
-                                        color: Colors.amber,
-                                        fontWeight: FontWeight.w600),
-                                  ),
-                                  const SizedBox(height: 4),
+                                  
                                   Text(
                                     _currentEvent!.name,
                                     style: const TextStyle(
@@ -181,7 +183,16 @@ class _HomeScreenState extends State<HomeScreen> {
                                       fontWeight: FontWeight.w600,
                                     ),
                                   ),
-                                  const SizedBox(height: 8),
+                                  const SizedBox(height: 5),
+                                  Text(
+                                    _isEventOngoing
+                                        ? "En ce moment !"
+                                        : "Prochain évènement",
+                                    style:  TextStyle(
+                                        fontSize: 12,
+                                        color: _isEventOngoing ? Colors.green : Colors.blue,
+                                        fontWeight: FontWeight.w600),
+                                  ),
                                 ],
                               ),
                             ),
@@ -191,64 +202,60 @@ class _HomeScreenState extends State<HomeScreen> {
                     },
                   ),
                 ),
-              const SizedBox(height: 32),
-              Column(
+              const SizedBox(height: 30),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Évènements à venir',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                      ElevatedButton(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                                builder: (context) =>
-                                    const CreateEventScreen()),
-                          ).then((value) {
-                            _fetchEvents(); // Rafraîchir les événements après la création
-                          });
-                        },
-                        child: const Icon(Icons.add),
-                      ),
-                    ],
+                  const Text(
+                    'Évènements à venir',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                  _upcomingEvents.isEmpty
-                      ? const Text("Pas d'évènements à venir")
-                      : ListView.builder(
-                          shrinkWrap: true,
-                          physics: const NeverScrollableScrollPhysics(),
-                          itemCount: _upcomingEvents.length,
-                          itemBuilder: (context, index) {
-                            final event = _upcomingEvents[index];
-                            return ListTile(
-                              onTap: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                      builder: (context) =>
-                                          EventDetailScreen(event: event)),
-                                );
-                              },
-                              title: Text(event.name),
-                              subtitle: Text(event.participants.length > 1
-                                  ? "${event.participants.length} participants"
-                                  : "${event.participants.length} participant"),
-                              trailing: IconButton(
-                                onPressed: () {},
-                                icon: const Icon(Icons.share),
-                              ),
-                            );
-                          },
-                        ),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (context) =>
+                                const CreateEventScreen()),
+                      ).then((value) {
+                        _fetchEvents(); // Rafraîchir les événements après la création
+                      });
+                    },
+                    child: const Icon(Icons.add),
+                  ),
                 ],
               ),
+              _upcomingEvents.isEmpty
+                  ? const Text("Aucun évènement à venir")
+                  : ListView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: _upcomingEvents.length,
+                      itemBuilder: (context, index) {
+                        final event = _upcomingEvents[index];
+                        return ListTile(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                  builder: (context) =>
+                                      EventDetailScreen(event: event)),
+                            );
+                          },
+                          title: Text(event.name),
+                          subtitle: Text(event.participants.length > 1
+                              ? "${event.participants.length} participants"
+                              : "${event.participants.length} participant"),
+                          trailing: IconButton(
+                            onPressed: () {},
+                            icon: const Icon(Icons.share),
+                          ),
+                        );
+                      },
+                    ),
             ],
           ),
         ),

@@ -39,20 +39,22 @@ class EventDetailScreen extends StatelessWidget {
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  "En cours...",
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: Colors.amber,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 4),
+               
                 Text(
                   event.name,
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 24,
+                  ),
+                ),
+                                const SizedBox(height: 5),
+
+                 const Text(
+                  "En ce moment !",
+                  style: TextStyle(
+                    fontSize: 12,
+                    color: Colors.green,
+                    fontWeight: FontWeight.w600,
                   ),
                 ),
               ],
@@ -68,34 +70,34 @@ class EventDetailScreen extends StatelessWidget {
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Container(
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    ClipRRect(
-                      borderRadius: const BorderRadius.only(
-                        topLeft: Radius.circular(16),
-                        topRight: Radius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.all(15.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Container(
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      ClipRRect(
+                        borderRadius:  BorderRadius.all(Radius.circular(15)
+                        ),
+                        child: SizedBox(
+                          height: 500,
+                          width: double.infinity,
+            
+                          child: MapWidget(eventId: event.id),
+                        ),
                       ),
-                      child: SizedBox(
-                        height: 500,
-                        width: double.infinity,
-                        child: MapWidget(event: event, isInteractive: true),
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
+                      const SizedBox(height: 15),
+                      Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const Text(
-                            "Localisation des membres",
+                            "Localisation de mon groupe",
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.w600,
@@ -126,15 +128,15 @@ class EventDetailScreen extends StatelessWidget {
                                 MaterialPageRoute(builder: (context) => AddParticipantScreen(eventId: event.id)),
                               );
                             },
-                            child: const Text('Add Participant'),
+                            child: const Text('Ajouter un pote'),
                           ),
                         ],
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

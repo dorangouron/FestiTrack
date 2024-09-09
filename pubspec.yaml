@@ -25,6 +25,8 @@ dependencies:
   share_plus: ^9.0.0
   location: ^7.0.0
   provider: ^6.1.2
+  flutter_background_service: ^5.0.10
+  flutter_background_service_android: ^6.2.7
 
 dev_dependencies:
   flutter_test:
