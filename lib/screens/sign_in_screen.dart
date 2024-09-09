@@ -39,7 +39,7 @@ class _SignInScreenState extends State<SignInScreen> {
             if (user != null) {
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (context) => HomeScreen()),
+                MaterialPageRoute(builder: (context) => const HomeScreen()),
               );
             }
           },

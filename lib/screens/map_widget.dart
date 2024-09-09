@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui' as ui;
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:festitrack/models/gps_point_model.dart';
 import 'package:festitrack/models/participant_model.dart';
@@ -61,7 +62,7 @@ class _MapWidgetState extends State<MapWidget> {
     });
 
     // Démarre un timer qui met à jour la position toutes les deux minutes
-    _timer = Timer.periodic(const Duration(minutes: 2), (Timer timer) async {
+    _timer = Timer.periodic(const Duration(seconds: 10), (Timer timer) async {
       LocationData newPosition = await _location.getLocation();
       setState(() {
         _currentPosition = newPosition;
@@ -144,7 +145,7 @@ class _MapWidgetState extends State<MapWidget> {
               LatLng lastPosition = LatLng(lastPoint.latitude, lastPoint.longitude);
 
               // Ajoute la dernière position du participant
-              _participantPositions[participant.id] = [lastPosition];
+              _participantPositions[participant.id] = participant.gpsPoints.map((p) => LatLng(p.latitude, p.longitude)).toList();
             }
           }
         });
@@ -160,28 +161,35 @@ class _MapWidgetState extends State<MapWidget> {
 
   @override
   Widget build(BuildContext context) {
-    final user = Provider.of<UserProvider>(context).user;
-
     return Scaffold(
-      body: GoogleMap(
-        scrollGesturesEnabled: widget.isInteractive,
-        onMapCreated: (controller) {
-          _controller = controller;
-          if (_currentPosition != null) {
-            _controller?.animateCamera(CameraUpdate.newLatLng(
-                LatLng(_currentPosition!.latitude!, _currentPosition!.longitude!)));
+      body: FutureBuilder<Set<Marker>>(
+        future: _buildMarkers(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          } else {
+            return GoogleMap(
+              scrollGesturesEnabled: widget.isInteractive,
+              onMapCreated: (controller) {
+                _controller = controller;
+                if (_currentPosition != null) {
+                  _controller?.animateCamera(CameraUpdate.newLatLng(
+                      LatLng(_currentPosition!.latitude!, _currentPosition!.longitude!)));
+                }
+              },
+              initialCameraPosition: CameraPosition(
+                target: _lastKnownPosition ?? const LatLng(0.0, 0.0), // Default to (0, 0) if no position is known
+                zoom: 15,
+              ),
+              myLocationButtonEnabled: false,
+              markers: snapshot.data ?? Set<Marker>(), // Utilise les marqueurs retournés
+              polylines: _buildPolylines(),
+            );
           }
         },
-        initialCameraPosition: CameraPosition(
-          target: _lastKnownPosition ?? const LatLng(0.0, 0.0), // Default to (0, 0) if no position is known
-          zoom: 15,
-        ),
-        myLocationButtonEnabled: false,
-        markers: _buildMarkers(),
-        polylines: _buildPolylines(),
       ),
-
-      // Bouton pour rafraîchir les permissions de localisation
       floatingActionButton: widget.isInteractive
           ? FloatingActionButton(
               backgroundColor: Colors.white,
@@ -192,23 +200,47 @@ class _MapWidgetState extends State<MapWidget> {
     );
   }
 
-  // Construit les marqueurs pour la dernière position de chaque participant
-  Set<Marker> _buildMarkers() {
-    Set<Marker> markers = {};
+  // Génère une image de cercle de la couleur donnée pour le marqueur
+  Future<BitmapDescriptor> _createMarkerIcon(Color color) async {
+    final ui.PictureRecorder pictureRecorder = ui.PictureRecorder();
+    final Canvas canvas = Canvas(pictureRecorder);
+    final Paint paint = Paint()..color = color;
+    const double radius = 30.0;
 
-    _participantPositions.forEach((participantId, positions) {
-      if (positions.isNotEmpty) {
-        var position = positions.last; // Utilise uniquement la dernière position
-        markers.add(Marker(
-          markerId: MarkerId('$participantId-${position.latitude}-${position.longitude}'),
-          position: position,
-          icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueBlue),
-        ));
-      }
-    });
+    canvas.drawCircle(const Offset(radius / 2, radius / 2), radius / 2, paint);
 
-    return markers;
+    final img = await pictureRecorder.endRecording().toImage(radius.toInt(), radius.toInt());
+    final data = await img.toByteData(format: ui.ImageByteFormat.png);
+
+    return BitmapDescriptor.fromBytes(data!.buffer.asUint8List());
   }
+
+// Construit les marqueurs pour la dernière position de chaque participant
+Future<Set<Marker>> _buildMarkers() async {
+  Set<Marker> markers = {};
+
+  // Create a copy of the keys to avoid modification during iteration
+  final participantIds = List<String>.from(_participantPositions.keys);
+
+  for (String participantId in participantIds) {
+    var positions = _participantPositions[participantId];
+    if (positions != null && positions.isNotEmpty) {
+      var position = positions.last; // Utilise uniquement la dernière position
+
+      // Crée un marqueur personnalisé
+      var markerIcon = await _createMarkerIcon(_getColorForParticipant(participantId));
+
+      markers.add(Marker(
+        markerId: MarkerId('$participantId-${position.latitude}-${position.longitude}'),
+        position: position,
+        icon: markerIcon,
+      ));
+    }
+  }
+
+  return markers;
+}
+
 
   // Construit les polylines pour afficher les traces des participants
   Set<Polyline> _buildPolylines() {
