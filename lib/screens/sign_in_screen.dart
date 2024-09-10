@@ -1,3 +1,4 @@
+import 'package:festitrack/models/app_colors.dart';
 import 'package:festitrack/screens/home_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
@@ -30,11 +31,41 @@ class _SignInScreenState extends State<SignInScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text("FestiTrack")),
-      body: Center(
-        child: ElevatedButton(
-          onPressed: () async {
+    return  Scaffold(
+      body: SafeArea(
+        child: Padding(
+          padding: EdgeInsets.all(15.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+              "Bienvenue sur FestiTrack",
+              style: TextStyle(fontSize: 24,color: AppColors.secondaryColor,fontWeight: FontWeight.bold),
+              textAlign: TextAlign.center,
+            ),
+            SizedBox(height: 20),
+            Text(
+              "Ne perds plus jamais tes potes lors d'un festival !",
+              style: TextStyle(color: AppColors.secondaryColor),
+              textAlign: TextAlign.center,
+            )
+            ],
+          ),
+        ),
+      ),
+           bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(15.0),
+          child: ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.accentColor,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(15),
+              ),
+            ),
+           onPressed: () async {
             User? user = await _signInWithGoogle();
             if (user != null) {
               Navigator.pushReplacement(
@@ -43,9 +74,24 @@ class _SignInScreenState extends State<SignInScreen> {
               );
             }
           },
-          child: const Text("Sign in with Google"),
+            child: SizedBox(
+              height: 50,
+              child: Center(
+                child: Text(
+                  'Connexion avec Google',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.dominantColor,
+                    fontSize: 16.0,
+                  ),
+                ),
+              ),
+            ),
+          ),
         ),
       ),
+   
+        
     );
   }
 }

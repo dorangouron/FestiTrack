@@ -1,3 +1,4 @@
+import 'package:festitrack/models/app_colors.dart';
 import 'package:festitrack/models/event_model.dart';
 import 'package:festitrack/models/participant_model.dart';
 import 'package:flutter/material.dart';
@@ -66,7 +67,18 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Create Event")),
+      backgroundColor: AppColors.dominantColor,
+      appBar: AppBar(
+        backgroundColor: AppColors.dominantColor,
+        foregroundColor: AppColors.secondaryColor,
+        title: Row(
+        children: [
+          const Text("Ajouter un évènement", style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+          ),),
+        ],
+      )),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(
@@ -75,7 +87,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
             children: <Widget>[
               TextFormField(
                 controller: _nameController,
-                decoration: const InputDecoration(labelText: 'Event Name'),
+                decoration: const InputDecoration(labelText: 'Nom de lévènement'),
                 validator: (value) {
                   if (value!.isEmpty) {
                     return 'Please enter a name';
@@ -86,7 +98,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
               const SizedBox(height: 20),
               ListTile(
                 title: Text(_startDate == null
-                    ? 'Start Date'
+                    ? 'Date de début'
                     : DateFormat.yMd().format(_startDate!)),
                 trailing: const Icon(Icons.calendar_today),
                 onTap: () => _selectDate(context, true),
@@ -94,7 +106,7 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
               const SizedBox(width: 20),
               ListTile(
                 title: Text(_endDate == null
-                    ? 'End Date'
+                    ? 'Date de fin'
                     : DateFormat.yMd().format(_endDate!)),
                 trailing: const Icon(Icons.calendar_today),
                 onTap: () => _selectDate(context, false),
@@ -104,14 +116,34 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
           ),
         ),
       ),
-      bottomNavigationBar: SafeArea(child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: ElevatedButton(
-          
-                  onPressed: _createEvent,
-                  child: const Text('Create Event'),
+
+      bottomNavigationBar: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(15.0),
+          child: ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.accentColor,
+              elevation: 0,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(15),
+              ),
+            ),
+           onPressed: _createEvent,
+            child: SizedBox(
+              height: 50,
+              child: Center(
+                child: Text(
+                  'Terminer',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.dominantColor,
+                    fontSize: 16.0,
+                  ),
                 ),
-      ),
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }

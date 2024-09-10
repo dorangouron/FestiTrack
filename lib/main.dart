@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:festitrack/models/app_colors.dart';
 import 'package:festitrack/models/event_model.dart';
 import 'package:festitrack/models/gps_point_model.dart';
 import 'package:festitrack/models/participant_model.dart';
@@ -24,6 +25,7 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => UserProvider()), // Fournir le UserProvider
       ],
       child: const MaterialApp(
+        color: AppColors.dominantColor,
         home: AuthWrapper(),
       ),
     );

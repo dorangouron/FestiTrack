@@ -1,3 +1,4 @@
+import 'package:festitrack/models/app_colors.dart';
 import 'package:firebase_dynamic_links/firebase_dynamic_links.dart';
 import 'package:flutter/material.dart';
 import 'package:festitrack/models/event_model.dart';
@@ -33,13 +34,15 @@ class EventDetailScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.dominantColor,
       appBar: AppBar(
+        backgroundColor: AppColors.dominantColor,
+        foregroundColor: AppColors.secondaryColor,
         title: Row(
           children: [
             Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-               
                 Text(
                   event.name,
                   style: const TextStyle(
@@ -47,13 +50,12 @@ class EventDetailScreen extends StatelessWidget {
                     fontSize: 24,
                   ),
                 ),
-                                const SizedBox(height: 5),
-
-                 const Text(
+                const SizedBox(height: 5),
+                const Text(
                   "En ce moment !",
                   style: TextStyle(
                     fontSize: 12,
-                    color: Colors.green,
+                    color: AppColors.accentColor,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -75,35 +77,36 @@ class EventDetailScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
+                Text(
+                  'Positions du groupe',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.secondaryColor,
+                  ),
+                ),
+                SizedBox(height: 15),
                 Container(
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(16),
+                                              border: Border.all(color: Colors.grey[300]!),
+
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      ClipRRect(
-                        borderRadius:  const BorderRadius.all(Radius.circular(15)
-                        ),
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final size = constraints.maxWidth; // Prendre la largeur disponible maximale
+                      return ClipRRect(
+                        borderRadius: const BorderRadius.all(Radius.circular(15)),
                         child: SizedBox(
-                          height: 500,
-                          width: double.infinity,
-            
+                          height: size,  // Utiliser la largeur maximale disponible pour la hauteur
+                          width: size,   // Utiliser la largeur maximale disponible pour la largeur
                           child: MapWidget(eventId: event.id),
                         ),
-                      ),
-                      const SizedBox(height: 15),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const Text(
-                            "Localisation de mon groupe",
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(height: 15),
                           ...event.participants.map((participant) {
                             return ListTile(
                               leading: Icon(
@@ -121,20 +124,48 @@ class EventDetailScreen extends StatelessWidget {
                                   : const Text("à 5m"),
                             );
                           }),
-                          ElevatedButton(
-                            onPressed: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(builder: (context) => AddParticipantScreen(eventId: event.id)),
-                              );
-                            },
-                            child: const Text('Ajouter un pote'),
-                          ),
-                        ],
+                const SizedBox(height: 30),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Membres du groupe',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.secondaryColor,
                       ),
-                    ],
-                  ),
+                    ),
+                     ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppColors.accentColor,
+                          foregroundColor: AppColors.dominantColor
+                        ),
+                        onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => AddParticipantScreen(eventId: event.id)),
+                        );
+                      },
+                        child: const Icon(Icons.add),
+                      ),
+                  ],
                 ),
+                const SizedBox(height: 15),
+                ...event.participants.map((participant) {
+                  return ListTile(
+                    leading: Icon(
+                      Icons.person,
+                      color: AppColors.secondaryColor
+                    ),
+                    title: Text(
+                      participant.id == event.participants.first.id ? "Toi" : participant.id,
+                      style: const TextStyle(fontSize: 16),
+                    ),
+                  );
+                }),
+                
+               
               ],
             ),
           ),

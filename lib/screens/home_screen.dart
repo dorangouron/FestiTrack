@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:festitrack/models/app_colors.dart';
 import 'package:festitrack/models/event_model.dart';
 import 'package:festitrack/screens/create_event_screen.dart';
 import 'package:festitrack/screens/event_details_screen.dart';
@@ -101,7 +102,9 @@ class _HomeScreenState extends State<HomeScreen> {
     }
 
     return Scaffold(
+      backgroundColor: AppColors.dominantColor,
       appBar: AppBar(
+        backgroundColor: AppColors.dominantColor,
         title: Row(
           children: [
             Text(
@@ -109,6 +112,7 @@ class _HomeScreenState extends State<HomeScreen> {
               style: const TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 24,
+                color: AppColors.secondaryColor
               ),
             ),
           ],
@@ -117,6 +121,7 @@ class _HomeScreenState extends State<HomeScreen> {
           IconButton(
             icon: const Icon(Icons.logout),
             onPressed: () => signOut(context),
+            color: AppColors.secondaryColor,
           ),
         ],
       ),
@@ -131,6 +136,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w600,
+                          color: AppColors.secondaryColor,
                         ),
                       ),
                       const SizedBox(
@@ -181,6 +187,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                     style: const TextStyle(
                                       fontSize: 18,
                                       fontWeight: FontWeight.w600,
+                                      color: AppColors.secondaryColor
                                     ),
                                   ),
                                   const SizedBox(height: 5),
@@ -190,7 +197,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                         : "Prochain évènement",
                                     style:  TextStyle(
                                         fontSize: 12,
-                                        color: _isEventOngoing ? Colors.green : Colors.blue,
+                                        color: AppColors.accentColor,
                                         fontWeight: FontWeight.w600),
                                   ),
                                 ],
@@ -211,9 +218,14 @@ class _HomeScreenState extends State<HomeScreen> {
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
+                      color: AppColors.secondaryColor
                     ),
                   ),
                   ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppColors.accentColor,
+                      foregroundColor: AppColors.dominantColor
+                    ),
                     onPressed: () {
                       Navigator.push(
                         context,
@@ -245,13 +257,19 @@ class _HomeScreenState extends State<HomeScreen> {
                                       EventDetailScreen(event: event)),
                             );
                           },
-                          title: Text(event.name),
+                          title: Text(event.name,
+                              style: const TextStyle(
+                                color: AppColors.secondaryColor
+                              )),
                           subtitle: Text(event.participants.length > 1
                               ? "${event.participants.length} participants"
-                              : "${event.participants.length} participant"),
+                              : "${event.participants.length} participant",style: TextStyle(
+                                color: AppColors.secondaryColor
+                              ,
+                              ),),
                           trailing: IconButton(
                             onPressed: () {},
-                            icon: const Icon(Icons.share),
+                            icon: const Icon(Icons.share,color: AppColors.accentColor,),
                           ),
                         );
                       },
