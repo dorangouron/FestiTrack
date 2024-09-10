@@ -83,7 +83,7 @@ class EventDetailScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       ClipRRect(
-                        borderRadius:  BorderRadius.all(Radius.circular(15)
+                        borderRadius:  const BorderRadius.all(Radius.circular(15)
                         ),
                         child: SizedBox(
                           height: 500,
