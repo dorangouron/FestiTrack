@@ -6,7 +6,6 @@ import 'package:festitrack/screens/event_details_screen.dart';
 import 'package:festitrack/screens/map_widget.dart';
 import 'package:festitrack/screens/sign_in_screen.dart';
 import 'package:festitrack/services/user_provider.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -21,36 +20,41 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isEventOngoing = false;
   Event? _currentEvent;
   List<Event> _upcomingEvents = [];
-  bool _initialized = false;
+  bool _isLoading = true;
 
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-
-    // Appelle _fetchEvents une seule fois après que les dépendances soient disponibles
-    if (!_initialized) {
-      _fetchEvents();
-      _initialized = true;
-    }
+  void initState() {
+    super.initState();
+    _loadUserAndFetchEvents();
   }
 
-  Future<void> signOut(BuildContext context) async {
-    await FirebaseAuth.instance.signOut();
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (context) => const SignInScreen()),
-    );
+Future<void> _loadUserAndFetchEvents() async {
+  final userProvider = Provider.of<UserProvider>(context, listen: false);
+  if (userProvider.isLoading) {
+    // Wait for the user provider to finish loading
+    await Future.doWhile(() => userProvider.isLoading);
   }
+  if (mounted && userProvider.user != null) {
+    await _fetchEvents();
+  }
+}
+
+Future<void> signOut(BuildContext context) async {
+  final userProvider = Provider.of<UserProvider>(context, listen: false);
+  await userProvider.signOut();
+  Navigator.of(context).pushReplacement(
+    MaterialPageRoute(builder: (context) => const SignInScreen()),
+  );
+}
 
   Future<void> _fetchEvents() async {
     final now = DateTime.now();
-
-    // Vérifie si l'utilisateur est défini avant de continuer
     final userProvider = Provider.of<UserProvider>(context, listen: false);
     final user = userProvider.user;
 
     if (user == null) {
       print("L'utilisateur n'est pas encore défini.");
-      return; // Retourne sans exécuter la logique de fetch si l'utilisateur est null
+      return;
     }
 
     final userId = user.uid;
@@ -76,31 +80,45 @@ class _HomeScreenState extends State<HomeScreen> {
       print('Ongoing events: ${ongoingEvents.length}');
       print('Upcoming events: ${userUpcomingEvents.length}');
 
-      setState(() {
-        if (ongoingEvents.isNotEmpty) {
-          _isEventOngoing = true;
-          _currentEvent = ongoingEvents.first;
-        } else if (userUpcomingEvents.isNotEmpty) {
-          _isEventOngoing = false;
-          _currentEvent = userUpcomingEvents.first;
-        }
-        _upcomingEvents = userUpcomingEvents;
-      });
+      if (mounted) {
+        setState(() {
+          if (ongoingEvents.isNotEmpty) {
+            _isEventOngoing = true;
+            _currentEvent = ongoingEvents.first;
+          } else if (userUpcomingEvents.isNotEmpty) {
+            _isEventOngoing = false;
+            _currentEvent = userUpcomingEvents.first;
+          } else {
+            _currentEvent = null;
+          }
+          _upcomingEvents = userUpcomingEvents;
+          _isLoading = false;
+        });
+      }
     } catch (e) {
       print('Error fetching events: $e');
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final userProvider = Provider.of<UserProvider>(context);
-    final user = userProvider.user;
+  return Consumer<UserProvider>(
+    builder: (context, userProvider, _) {
+      if (userProvider.isLoading || _isLoading) {
+        return const Scaffold(
+          body: Center(child: CircularProgressIndicator()),
+        );
+      }
 
-    // Assure-toi que l'utilisateur est défini avant de rendre l'écran
-    if (user == null) {
-      return const Center(child: CircularProgressIndicator());
-    }
-
+      final user = userProvider.user;
+      if (user == null) {
+        return const SignInScreen();
+      }
     return Scaffold(
       backgroundColor: AppColors.dominantColor,
       appBar: AppBar(
@@ -126,158 +144,162 @@ class _HomeScreenState extends State<HomeScreen> {
         ],
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(15.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              const Text(
-                        'Prochain évènement',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.secondaryColor,
-                        ),
-                      ),
-                      const SizedBox(
-                        height: 10,
-                      ),
-              if (_currentEvent != null)
-                GestureDetector(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) =>
-                              EventDetailScreen(event: _currentEvent!)),
-                    );
-                  },
-                  child: LayoutBuilder(
-                    builder: (context, constraints) {
-                      final size = constraints.maxWidth;
-                      return Container(
-                        decoration: BoxDecoration(
-                          border: Border.all(color: Colors.grey[300]!),
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            ClipRRect(
-                              borderRadius: const BorderRadius.only(
-                                topLeft: Radius.circular(16),
-                                topRight: Radius.circular(16),
-                              ),
-                              child: SizedBox(
-                                height: size,
-                                width: size,
-                                child: MapWidget(
-                                    eventId: _currentEvent!.id,
-                                ),
-                              ),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.all(15.0),
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  
-                                  Text(
-                                    _currentEvent!.name,
-                                    style: const TextStyle(
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.w600,
-                                      color: AppColors.secondaryColor
-                                    ),
-                                  ),
-                                  const SizedBox(height: 5),
-                                  Text(
-                                    _isEventOngoing
-                                        ? "En ce moment !"
-                                        : "Prochain évènement",
-                                    style:  TextStyle(
-                                        fontSize: 12,
-                                        color: AppColors.accentColor,
-                                        fontWeight: FontWeight.w600),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                    },
+        child: RefreshIndicator(
+          onRefresh: _fetchEvents,
+          child: SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
+            padding: const EdgeInsets.all(15.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                const Text(
+                  'Prochain évènement',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.secondaryColor,
                   ),
                 ),
-              const SizedBox(height: 30),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  const Text(
-                    'Évènements à venir',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: AppColors.secondaryColor
-                    ),
-                  ),
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.accentColor,
-                      foregroundColor: AppColors.dominantColor
-                    ),
-                    onPressed: () {
+                const SizedBox(height: 10),
+                if (_currentEvent != null)
+                  GestureDetector(
+                    onTap: () {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
                             builder: (context) =>
-                                const CreateEventScreen()),
-                      ).then((value) {
-                        _fetchEvents(); // Rafraîchir les événements après la création
-                      });
+                                EventDetailScreen(event: _currentEvent!)),
+                      );
                     },
-                    child: const Icon(Icons.add),
-                  ),
-                ],
-              ),
-              _upcomingEvents.isEmpty
-                  ? const Text("Aucun évènement à venir")
-                  : ListView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: _upcomingEvents.length,
-                      itemBuilder: (context, index) {
-                        final event = _upcomingEvents[index];
-                        return ListTile(
-                          onTap: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                  builder: (context) =>
-                                      EventDetailScreen(event: event)),
-                            );
-                          },
-                          title: Text(event.name,
-                              style: const TextStyle(
-                                color: AppColors.secondaryColor
-                              )),
-                          subtitle: Text(event.participants.length > 1
-                              ? "${event.participants.length} participants"
-                              : "${event.participants.length} participant",style: TextStyle(
-                                color: AppColors.secondaryColor
-                              ,
-                              ),),
-                          trailing: IconButton(
-                            onPressed: () {},
-                            icon: const Icon(Icons.share,color: AppColors.accentColor,),
+                    child: LayoutBuilder(
+                      builder: (context, constraints) {
+                        final size = constraints.maxWidth;
+                        return Container(
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.grey[300]!),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              ClipRRect(
+                                borderRadius: const BorderRadius.only(
+                                  topLeft: Radius.circular(16),
+                                  topRight: Radius.circular(16),
+                                ),
+                                child: SizedBox(
+                                  height: size,
+                                  width: size,
+                                  child: MapWidget(
+                                    eventId: _currentEvent!.id,
+                                  ),
+                                ),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.all(15.0),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      _currentEvent!.name,
+                                      style: const TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w600,
+                                        color: AppColors.secondaryColor
+                                      ),
+                                    ),
+                                    const SizedBox(height: 5),
+                                    Text(
+                                      _isEventOngoing
+                                          ? "En ce moment !"
+                                          : "Prochain évènement",
+                                      style: const TextStyle(
+                                          fontSize: 12,
+                                          color: AppColors.accentColor,
+                                          fontWeight: FontWeight.w600),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ],
                           ),
                         );
                       },
                     ),
-            ],
+                  ),
+                const SizedBox(height: 30),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Évènements à venir',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.secondaryColor
+                      ),
+                    ),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.accentColor,
+                        foregroundColor: AppColors.dominantColor
+                      ),
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) =>
+                                  const CreateEventScreen()),
+                        ).then((value) {
+                          _fetchEvents();
+                        });
+                      },
+                      child: const Icon(Icons.add),
+                    ),
+                  ],
+                ),
+                _upcomingEvents.isEmpty
+                    ? const Text("Aucun évènement à venir")
+                    : ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: _upcomingEvents.length,
+                        itemBuilder: (context, index) {
+                          final event = _upcomingEvents[index];
+                          return ListTile(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) =>
+                                        EventDetailScreen(event: event)),
+                              );
+                            },
+                            title: Text(event.name,
+                                style: const TextStyle(
+                                  color: AppColors.secondaryColor
+                                )),
+                            subtitle: Text(event.participants.length > 1
+                                ? "${event.participants.length} participants"
+                                : "${event.participants.length} participant",
+                              style: const TextStyle(
+                                color: AppColors.secondaryColor,
+                              ),
+                            ),
+                            trailing: IconButton(
+                              onPressed: () {},
+                              icon: const Icon(Icons.share, color: AppColors.accentColor),
+                            ),
+                          );
+                        },
+                      ),
+              ],
+            ),
           ),
         ),
       ),
     );
+  }
+  );
   }
 }

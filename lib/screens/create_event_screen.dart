@@ -71,9 +71,9 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
       appBar: AppBar(
         backgroundColor: AppColors.dominantColor,
         foregroundColor: AppColors.secondaryColor,
-        title: Row(
+        title: const Row(
         children: [
-          const Text("Ajouter un évènement", style: TextStyle(
+          Text("Ajouter un évènement", style: TextStyle(
             fontSize: 24,
             fontWeight: FontWeight.bold,
           ),),
@@ -129,12 +129,12 @@ class _CreateEventScreenState extends State<CreateEventScreen> {
               ),
             ),
            onPressed: _createEvent,
-            child: SizedBox(
+            child: const SizedBox(
               height: 50,
               child: Center(
                 child: Text(
                   'Terminer',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.bold,
                     color: AppColors.dominantColor,
                     fontSize: 16.0,

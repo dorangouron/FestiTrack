@@ -32,7 +32,7 @@ class _SignInScreenState extends State<SignInScreen> {
   @override
   Widget build(BuildContext context) {
     return  Scaffold(
-      body: SafeArea(
+      body: const SafeArea(
         child: Padding(
           padding: EdgeInsets.all(15.0),
           child: Column(
@@ -74,12 +74,12 @@ class _SignInScreenState extends State<SignInScreen> {
               );
             }
           },
-            child: SizedBox(
+            child: const SizedBox(
               height: 50,
               child: Center(
                 child: Text(
                   'Connexion avec Google',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontWeight: FontWeight.bold,
                     color: AppColors.dominantColor,
                     fontSize: 16.0,

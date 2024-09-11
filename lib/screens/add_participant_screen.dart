@@ -1,3 +1,4 @@
+import 'package:festitrack/models/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -49,8 +50,18 @@ class _AddParticipantScreenState extends State<AddParticipantScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: AppColors.dominantColor,
       appBar: AppBar(
-        title: const Text('Add Participant'),
+        backgroundColor: AppColors.dominantColor,
+        foregroundColor: AppColors.secondaryColor,
+        title: Row(
+          children: [
+            const Text('Ajouter un participant',style: TextStyle(
+              fontWeight: FontWeight.bold,
+              fontSize: 24,
+            ),),
+          ],
+        ),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -59,7 +70,7 @@ class _AddParticipantScreenState extends State<AddParticipantScreen> {
             TextField(
               controller: _searchController,
               decoration: InputDecoration(
-                labelText: 'Search by name',
+                labelText: 'Rechercher un prénom',
                 suffixIcon: IconButton(
                   icon: const Icon(Icons.search),
                   onPressed: _searchUsers,

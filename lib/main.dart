@@ -13,6 +13,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter_background_service/flutter_background_service.dart';
 import 'package:location/location.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/date_symbol_data_local.dart';
 
 
 class MyApp extends StatelessWidget {
@@ -35,8 +36,10 @@ class MyApp extends StatelessWidget {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
   await Firebase.initializeApp();  // Assurez-vous que Firebase est bien initialisé
   await initializeService();       // Démarrer le service après l'initialisation de Firebase
+  await initializeDateFormatting('fr_FR', null); 
   runApp(const MyApp());
 }
 

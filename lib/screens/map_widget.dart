@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -15,24 +17,31 @@ class MapWidget extends StatefulWidget {
 
 class _MapWidgetState extends State<MapWidget> {
   GoogleMapController? _controller;
-  final Map<String, List<LatLng>> _participantPositions = {}; // Positions des participants
+  final Map<String, List<LatLng>> _participantPositions = {};
+  StreamSubscription<DocumentSnapshot>? _firestoreSubscription;
 
   @override
   void initState() {
     super.initState();
-    _listenToFirestoreUpdates(); // Écoute les mises à jour de Firestore
+    _listenToFirestoreUpdates();
   }
 
-  // Écoute les mises à jour de la base de données Firestore en temps réel
+  @override
+  void dispose() {
+    _firestoreSubscription?.cancel();
+    _controller?.dispose();
+    super.dispose();
+  }
+
   void _listenToFirestoreUpdates() {
-    FirebaseFirestore.instance
+    _firestoreSubscription = FirebaseFirestore.instance
         .collection('events')
         .doc(widget.eventId)
         .snapshots()
         .listen((snapshot) {
-      if (snapshot.exists) {
+      if (snapshot.exists && mounted) {
         setState(() {
-          _participantPositions.clear(); // Réinitialise les positions des participants
+          _participantPositions.clear();
 
           final eventData = snapshot.data() as Map<String, dynamic>;
           Event event = Event.fromMap(eventData);
@@ -43,19 +52,16 @@ class _MapWidgetState extends State<MapWidget> {
                 .toList();
             _participantPositions[participant.id] = positions;
           }
-
-          // Mise à jour de la caméra pour afficher toutes les positions
-          _zoomToFitPositions();
         });
+
+        _zoomToFitPositions();
       }
     });
   }
 
-  // Fonction pour zoomer et ajuster la caméra afin que toutes les positions soient visibles
   void _zoomToFitPositions() {
-    if (_participantPositions.isEmpty) return;
+    if (_participantPositions.isEmpty || _controller == null) return;
 
-    // Crée une "boîte" de limites (LatLngBounds) qui inclut toutes les positions
     LatLngBounds bounds;
     List<LatLng> allPositions = [];
 
@@ -64,13 +70,11 @@ class _MapWidgetState extends State<MapWidget> {
     });
 
     if (allPositions.length == 1) {
-      // S'il n'y a qu'une seule position, centre la carte sur cette position
       bounds = LatLngBounds(
         southwest: allPositions[0],
         northeast: allPositions[0],
       );
     } else {
-      // Trouve les positions "sud-ouest" et "nord-est" qui couvrent toutes les positions
       LatLng southwest = allPositions.reduce((a, b) => LatLng(
           a.latitude < b.latitude ? a.latitude : b.latitude,
           a.longitude < b.longitude ? a.longitude : b.longitude));
@@ -81,28 +85,27 @@ class _MapWidgetState extends State<MapWidget> {
       bounds = LatLngBounds(southwest: southwest, northeast: northeast);
     }
 
-    // Appliquer les bounds à la caméra
-    _controller?.animateCamera(CameraUpdate.newLatLngBounds(bounds, 50)); // 50 pour padding
+    _controller?.animateCamera(CameraUpdate.newLatLngBounds(bounds, 50));
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: GoogleMap(
-        onMapCreated: (controller) {
+    return GoogleMap(
+      onMapCreated: (controller) {
+        setState(() {
           _controller = controller;
-          if (_participantPositions.isNotEmpty) {
-            _zoomToFitPositions(); // Ajuste la carte dès sa création
-          }
-        },
-        initialCameraPosition: const CameraPosition(
-          target: LatLng(0.0, 0.0), // Par défaut
-          zoom: 15,
-        ),
-        myLocationButtonEnabled: false,
-        markers: _buildMarkers(),
-        polylines: _buildPolylines(),
+        });
+        if (_participantPositions.isNotEmpty) {
+          _zoomToFitPositions();
+        }
+      },
+      initialCameraPosition: const CameraPosition(
+        target: LatLng(0.0, 0.0),
+        zoom: 15,
       ),
+      myLocationButtonEnabled: false,
+      markers: _buildMarkers(),
+      polylines: _buildPolylines(),
     );
   }
 
@@ -111,7 +114,7 @@ class _MapWidgetState extends State<MapWidget> {
 
     _participantPositions.forEach((participantId, positions) {
       if (positions.isNotEmpty) {
-        var position = positions.last; // Utilise la dernière position
+        var position = positions.last;
 
         markers.add(Marker(
           markerId: MarkerId('$participantId-${position.latitude}-${position.longitude}'),

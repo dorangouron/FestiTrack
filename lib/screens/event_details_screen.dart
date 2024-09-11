@@ -3,6 +3,7 @@ import 'package:firebase_dynamic_links/firebase_dynamic_links.dart';
 import 'package:flutter/material.dart';
 import 'package:festitrack/models/event_model.dart';
 import 'package:festitrack/screens/map_widget.dart';
+import 'package:intl/intl.dart';
 import 'package:share_plus/share_plus.dart';
 import 'add_participant_screen.dart';  // Import the new screen
 
@@ -77,7 +78,7 @@ class EventDetailScreen extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                Text(
+                const Text(
                   'Positions du groupe',
                   style: TextStyle(
                     fontSize: 18,
@@ -85,7 +86,7 @@ class EventDetailScreen extends StatelessWidget {
                     color: AppColors.secondaryColor,
                   ),
                 ),
-                SizedBox(height: 15),
+                const SizedBox(height: 15),
                 Container(
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(16),
@@ -124,11 +125,30 @@ class EventDetailScreen extends StatelessWidget {
                                   : const Text("à 5m"),
                             );
                           }),
+                                          const SizedBox(height: 30),
+                          const Text(
+                      'Dates',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.secondaryColor,
+                      ),
+                    ),
+                                    const SizedBox(height: 15),
+                                    Text(
+                                      'du ${DateFormat('EEEE d MMMM yyyy', 'fr_FR').format(event.start)}',
+                                      style: const TextStyle(color: AppColors.secondaryColor),
+                                    ),
+                                    Text(
+                                      'du ${DateFormat('EEEE d MMMM yyyy', 'fr_FR').format(event.end)}',
+                                      style: const TextStyle(color: AppColors.secondaryColor),
+                                    ),
+
                 const SizedBox(height: 30),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
+                    const Text(
                       'Membres du groupe',
                       style: TextStyle(
                         fontSize: 18,
@@ -154,7 +174,7 @@ class EventDetailScreen extends StatelessWidget {
                 const SizedBox(height: 15),
                 ...event.participants.map((participant) {
                   return ListTile(
-                    leading: Icon(
+                    leading: const Icon(
                       Icons.person,
                       color: AppColors.secondaryColor
                     ),
