@@ -139,15 +139,44 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                const Text(
-                  'Carte du groupe',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.secondaryColor,
-                  ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Carte du groupe',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.secondaryColor,
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => Scaffold(
+                                  appBar: AppBar(
+                                    backgroundColor: Colors.transparent,
+                                    leading: IconButton(
+                                      onPressed: () {
+                                        Navigator.pop(context);
+                                      },
+                                      icon: const Icon(Icons.arrow_back),
+                                    ),
+                                  ),
+                                  extendBodyBehindAppBar: true,
+                                  body: MapWidget(eventId: widget.event.id))),
+                        );
+                      },
+                      child: const Text(
+                        'Explorer',
+                        style: TextStyle(color: AppColors.accentColor),
+                      ),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 15),
+                const SizedBox(height: 10),
                 Container(
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(16),
@@ -160,7 +189,7 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                         borderRadius:
                             const BorderRadius.all(Radius.circular(15)),
                         child: SizedBox(
-                          height: size,
+                          height: size * 4 / 3,
                           width: size,
                           child: MapWidget(eventId: widget.event.id),
                         ),
@@ -168,18 +197,12 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                     },
                   ),
                 ),
-                const SizedBox(height: 15),
+                const SizedBox(height: 10),
                 ...widget.event.participants.map((participant) {
                   return FutureBuilder<double>(
                     future: _calculateDistance(participant.id),
                     builder: (context, snapshot) {
                       return ListTile(
-                        leading: Icon(
-                          Icons.circle,
-                          color: participant.id == _auth.currentUser?.uid
-                              ? Colors.blue
-                              : Colors.green,
-                        ),
                         title: Text(
                           _getParticipantName(participant.id),
                           style: const TextStyle(fontSize: 16),
@@ -193,20 +216,6 @@ class _EventDetailScreenState extends State<EventDetailScreen> {
                     },
                   );
                 }),
-                TextButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) =>
-                              MapWidget(eventId: widget.event.id)),
-                    );
-                  },
-                  child: const Text(
-                    'Voir en détails',
-                    style: TextStyle(color: AppColors.accentColor),
-                  ),
-                ),
                 const SizedBox(height: 30),
                 const Text(
                   'Dates',

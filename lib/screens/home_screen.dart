@@ -7,6 +7,7 @@ import 'package:festitrack/screens/map_widget.dart';
 import 'package:festitrack/screens/sign_in_screen.dart';
 import 'package:festitrack/services/user_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:provider/provider.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -155,6 +156,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          const SizedBox(height: 15),
                           const Text(
                             'Prochain évènement',
                             style: TextStyle(
@@ -173,63 +175,60 @@ class _HomeScreenState extends State<HomeScreen> {
                                         event: _currentEvent!)),
                               );
                             },
-                            child: LayoutBuilder(
-                              builder: (context, constraints) {
-                                final size = constraints.maxWidth;
-                                return Container(
-                                  decoration: BoxDecoration(
-                                    border:
-                                        Border.all(color: Colors.grey[300]!),
-                                    borderRadius: BorderRadius.circular(16),
-                                  ),
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      ClipRRect(
-                                        borderRadius: const BorderRadius.only(
-                                          topLeft: Radius.circular(16),
-                                          topRight: Radius.circular(16),
-                                        ),
-                                        child: SizedBox(
-                                          height: size,
-                                          width: size,
-                                          child: MapWidget(
-                                            eventId: _currentEvent!.id,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                border: Border.all(color: Colors.grey[300]!),
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  ClipRRect(
+                                    borderRadius: const BorderRadius.only(
+                                      topLeft: Radius.circular(16),
+                                      bottomLeft: Radius.circular(16),
+                                    ),
+                                    child: SizedBox(
+                                        height: 80,
+                                        width: 80,
+                                        child: GoogleMap(
+                                          initialCameraPosition:
+                                              const CameraPosition(
+                                            target: LatLng(47.58676294336266,
+                                                -3.0611525541114726),
+                                            zoom: 15,
                                           ),
-                                        ),
-                                      ),
-                                      Padding(
-                                        padding: const EdgeInsets.all(15.0),
-                                        child: Column(
-                                          crossAxisAlignment:
-                                              CrossAxisAlignment.start,
-                                          children: [
-                                            Text(
-                                              _currentEvent!.name,
-                                              style: const TextStyle(
-                                                  fontSize: 18,
-                                                  fontWeight: FontWeight.w600,
-                                                  color:
-                                                      AppColors.secondaryColor),
-                                            ),
-                                            const SizedBox(height: 5),
-                                            Text(
-                                              _isEventOngoing
-                                                  ? "En ce moment !"
-                                                  : "Prochain évènement",
-                                              style: const TextStyle(
-                                                  fontSize: 12,
-                                                  color: AppColors.accentColor,
-                                                  fontWeight: FontWeight.w600),
-                                            ),
-                                          ],
-                                        ),
-                                      ),
-                                    ],
+                                          myLocationButtonEnabled: false,
+                                        )),
                                   ),
-                                );
-                              },
+                                  Padding(
+                                    padding: const EdgeInsets.all(15.0),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          _currentEvent!.name,
+                                          style: const TextStyle(
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.w600,
+                                              color: AppColors.secondaryColor),
+                                        ),
+                                        const SizedBox(height: 5),
+                                        Text(
+                                          _isEventOngoing
+                                              ? "En ce moment !"
+                                              : "Prochain évènement",
+                                          style: const TextStyle(
+                                              fontSize: 12,
+                                              color: AppColors.accentColor,
+                                              fontWeight: FontWeight.w600),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                           const SizedBox(height: 30),
