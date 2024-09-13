@@ -48,7 +48,8 @@ class _MapWidgetState extends State<MapWidget> {
 
           for (Participant participant in event.participants) {
             List<LatLng> positions = participant.gpsPoints
-                .map((gpsPoint) => LatLng(gpsPoint.latitude, gpsPoint.longitude))
+                .map(
+                    (gpsPoint) => LatLng(gpsPoint.latitude, gpsPoint.longitude))
                 .toList();
             _participantPositions[participant.id] = positions;
           }
@@ -100,7 +101,7 @@ class _MapWidgetState extends State<MapWidget> {
         }
       },
       initialCameraPosition: const CameraPosition(
-        target: LatLng(0.0, 0.0),
+        target: LatLng(47.58, -3.08),
         zoom: 15,
       ),
       myLocationButtonEnabled: false,
@@ -117,7 +118,8 @@ class _MapWidgetState extends State<MapWidget> {
         var position = positions.last;
 
         markers.add(Marker(
-          markerId: MarkerId('$participantId-${position.latitude}-${position.longitude}'),
+          markerId: MarkerId(
+              '$participantId-${position.latitude}-${position.longitude}'),
           position: position,
         ));
       }
@@ -132,13 +134,12 @@ class _MapWidgetState extends State<MapWidget> {
     _participantPositions.forEach((participantId, positions) {
       if (positions.length > 1) {
         polylines.add(Polyline(
-          polylineId: PolylineId(participantId),
-          points: positions,
-          color: Colors.blue,
-          width: 4,
-          jointType: JointType.round,
-          endCap: Cap.roundCap
-        ));
+            polylineId: PolylineId(participantId),
+            points: positions,
+            color: Colors.blue,
+            width: 4,
+            jointType: JointType.round,
+            endCap: Cap.roundCap));
       }
     });
 
