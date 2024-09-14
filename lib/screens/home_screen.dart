@@ -22,6 +22,7 @@ class _HomeScreenState extends State<HomeScreen> {
   Event? _currentEvent;
   List<Event> _upcomingEvents = [];
   bool _isLoading = true;
+  bool _mounted = true;
 
   @override
   void initState() {
@@ -29,12 +30,17 @@ class _HomeScreenState extends State<HomeScreen> {
     _loadUserAndFetchEvents();
   }
 
+  @override
+  void dispose() {
+    _mounted = false;
+    super.dispose();
+  }
+
   Future<void> _loadUserAndFetchEvents() async {
+    if (!_mounted) return;
     final userProvider = Provider.of<UserProvider>(context, listen: false);
-    if (userProvider.isLoading) {
-      await Future.doWhile(() => userProvider.isLoading);
-    }
-    if (mounted && userProvider.user != null) {
+    await userProvider.loadUser();
+    if (_mounted && userProvider.user != null) {
       await _fetchEvents();
     }
   }
@@ -42,12 +48,15 @@ class _HomeScreenState extends State<HomeScreen> {
   Future<void> signOut(BuildContext context) async {
     final userProvider = Provider.of<UserProvider>(context, listen: false);
     await userProvider.signOut();
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute(builder: (context) => const SignInScreen()),
-    );
+    if (_mounted) {
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute(builder: (context) => const SignInScreen()),
+      );
+    }
   }
 
   Future<void> _fetchEvents() async {
+    if (!_mounted) return;
     final now = DateTime.now();
     final userProvider = Provider.of<UserProvider>(context, listen: false);
     final user = userProvider.user;
@@ -62,6 +71,8 @@ class _HomeScreenState extends State<HomeScreen> {
     try {
       print('Fetching events...');
       final query = await FirebaseFirestore.instance.collection('events').get();
+
+      if (!_mounted) return;
 
       final events = query.docs
           .map((doc) => Event.fromMap(doc.data()))
@@ -80,7 +91,7 @@ class _HomeScreenState extends State<HomeScreen> {
       print('Ongoing events: ${ongoingEvents.length}');
       print('Upcoming events: ${upcomingEvents.length}');
 
-      if (mounted) {
+      if (_mounted) {
         setState(() {
           if (ongoingEvents.isNotEmpty) {
             _isEventOngoing = true;
@@ -97,7 +108,7 @@ class _HomeScreenState extends State<HomeScreen> {
       }
     } catch (e) {
       print('Error fetching events: $e');
-      if (mounted) {
+      if (_mounted) {
         setState(() {
           _isLoading = false;
         });
