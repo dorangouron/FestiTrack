@@ -20,6 +20,7 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isEventOngoing = false;
   Event? _currentEvent;
   List<Event> _upcomingEvents = [];
+  List<Event> ongoingEvents = [];
   bool _isLoading = true;
 
   @override
@@ -60,7 +61,7 @@ class _HomeScreenState extends State<HomeScreen> {
               event.participants.any((participant) => participant.id == userId))
           .toList();
 
-      final ongoingEvents = events.where((event) {
+      ongoingEvents = events.where((event) {
         return event.start.isBefore(now) && event.end.isAfter(now);
       }).toList();
 
@@ -71,7 +72,6 @@ class _HomeScreenState extends State<HomeScreen> {
       setState(() {
         if (ongoingEvents.isNotEmpty) {
           _isEventOngoing = true;
-          _currentEvent = ongoingEvents.first;
         } else if (upcomingEvents.isNotEmpty) {
           _isEventOngoing = false;
           _currentEvent = upcomingEvents.first;
@@ -108,12 +108,16 @@ class _HomeScreenState extends State<HomeScreen> {
           backgroundColor: AppColors.dominantColor,
           appBar: AppBar(
             backgroundColor: AppColors.dominantColor,
-            title: Text(
-              "Hello ${user.displayName ?? 'Utilisateur'} !",
-              style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 24,
-                  color: AppColors.secondaryColor),
+            title: Row(
+              children: [
+                Text(
+                  "Hello ${user.displayName ?? 'Utilisateur'} !",
+                  style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 24,
+                      color: AppColors.secondaryColor),
+                ),
+              ],
             ),
             actions: [
               IconButton(
@@ -132,7 +136,88 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                    if (_currentEvent != null) ...[
+                    if (_isEventOngoing && ongoingEvents.isNotEmpty) ...[
+                      const SizedBox(height: 15),
+                      const Text(
+                        'Évènements en cours',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.secondaryColor,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Column(
+                        children: ongoingEvents.map((event) {
+                          return GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      EventDetailScreen(event: event),
+                                ),
+                              );
+                            },
+                            child: Container(
+                              margin: const EdgeInsets.only(bottom: 10),
+                              decoration: BoxDecoration(
+                                border: Border.all(color: Colors.grey[300]!),
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  ClipRRect(
+                                    borderRadius: const BorderRadius.only(
+                                      topLeft: Radius.circular(16),
+                                      bottomLeft: Radius.circular(16),
+                                    ),
+                                    child: SizedBox(
+                                      height: 80,
+                                      width: 80,
+                                      child: GoogleMap(
+                                        initialCameraPosition: CameraPosition(
+                                          target: LatLng(47.58676294336266,
+                                              -3.0611525541114726),
+                                          zoom: 15,
+                                        ),
+                                        myLocationButtonEnabled: false,
+                                      ),
+                                    ),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.all(15.0),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          event.name,
+                                          style: const TextStyle(
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.w600,
+                                              color: AppColors.secondaryColor),
+                                        ),
+                                        const SizedBox(height: 5),
+                                        const Text(
+                                          "En ce moment !",
+                                          style: TextStyle(
+                                              fontSize: 12,
+                                              color: AppColors.accentColor,
+                                              fontWeight: FontWeight.w600),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                      const SizedBox(height: 30),
+                    ] else if (_currentEvent != null) ...[
                       const SizedBox(height: 15),
                       const Text(
                         'Prochain évènement',
@@ -148,8 +233,9 @@ class _HomeScreenState extends State<HomeScreen> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                                builder: (context) =>
-                                    EventDetailScreen(event: _currentEvent!)),
+                              builder: (context) =>
+                                  EventDetailScreen(event: _currentEvent!),
+                            ),
                           );
                         },
                         child: Container(
@@ -166,17 +252,17 @@ class _HomeScreenState extends State<HomeScreen> {
                                   bottomLeft: Radius.circular(16),
                                 ),
                                 child: SizedBox(
-                                    height: 80,
-                                    width: 80,
-                                    child: GoogleMap(
-                                      initialCameraPosition:
-                                          const CameraPosition(
-                                        target: LatLng(47.58676294336266,
-                                            -3.0611525541114726),
-                                        zoom: 15,
-                                      ),
-                                      myLocationButtonEnabled: false,
-                                    )),
+                                  height: 80,
+                                  width: 80,
+                                  child: GoogleMap(
+                                    initialCameraPosition: CameraPosition(
+                                      target: LatLng(47.58676294336266,
+                                          -3.0611525541114726),
+                                      zoom: 15,
+                                    ),
+                                    myLocationButtonEnabled: false,
+                                  ),
+                                ),
                               ),
                               Padding(
                                 padding: const EdgeInsets.all(15.0),
@@ -191,11 +277,9 @@ class _HomeScreenState extends State<HomeScreen> {
                                           color: AppColors.secondaryColor),
                                     ),
                                     const SizedBox(height: 5),
-                                    Text(
-                                      _isEventOngoing
-                                          ? "En ce moment !"
-                                          : "Prochain évènement",
-                                      style: const TextStyle(
+                                    const Text(
+                                      "Prochain évènement",
+                                      style: TextStyle(
                                           fontSize: 12,
                                           color: AppColors.accentColor,
                                           fontWeight: FontWeight.w600),

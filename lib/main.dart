@@ -77,10 +77,36 @@ void onStart(ServiceInstance service) async {
     return false;
   }
 
-  // Fonction pour traiter les événements actifs
   Future<void> processActiveEvents() async {
     final currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser == null) return;
+
+    Location location = Location();
+    bool serviceEnabled;
+    PermissionStatus permissionGranted;
+
+    // Vérifie si le service de localisation est activé
+    serviceEnabled = await location.serviceEnabled();
+    if (!serviceEnabled) {
+      serviceEnabled = await location.requestService();
+      if (!serviceEnabled) {
+        print("Location service is disabled.");
+        return;
+      }
+    }
+
+    // Vérifie les permissions de localisation
+    permissionGranted = await location.hasPermission();
+    if (permissionGranted == PermissionStatus.denied) {
+      permissionGranted = await location.requestPermission();
+      if (permissionGranted != PermissionStatus.granted) {
+        print("Location permission denied.");
+        return;
+      }
+    } else if (permissionGranted == PermissionStatus.deniedForever) {
+      print("Location permission permanently denied.");
+      return;
+    }
 
     LocationData locationData;
     try {
@@ -102,31 +128,25 @@ void onStart(ServiceInstance service) async {
     for (var eventDoc in eventsSnapshot.docs) {
       final eventData = eventDoc.data() as Map<String, dynamic>;
       Event event = Event.fromMap(eventData);
-
       if (event.participants
           .any((participant) => participant.id == currentUser.uid)) {
         print("User is a participant in active event: ${event.id}");
-
         Participant currentParticipant = event.participants.firstWhere(
           (participant) => participant.id == currentUser.uid,
           orElse: () => Participant(id: currentUser.uid, gpsPoints: []),
         );
-
         GPSPoint newGpsPoint = GPSPoint(
           latitude: locationData.latitude!,
           longitude: locationData.longitude!,
           creationDate: DateTime.now(),
         );
-
         currentParticipant.gpsPoints.add(newGpsPoint);
         if (currentParticipant.gpsPoints.length > 5) {
           currentParticipant.gpsPoints.removeAt(0);
         }
-
         event.participants
             .removeWhere((participant) => participant.id == currentUser.uid);
         event.participants.add(currentParticipant);
-
         try {
           await FirebaseFirestore.instance
               .collection('events')
