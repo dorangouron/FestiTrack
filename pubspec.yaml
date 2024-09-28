@@ -1,11 +1,11 @@
 name: festitrack
 description: "A new Flutter project."
-publish_to: 'none'
+publish_to: "none"
 
 version: 1.0.0+1
 
 environment:
-  sdk: '>=3.4.3 <4.0.0'
+  sdk: ">=3.4.3 <4.0.0"
 
 dependencies:
   flutter:
@@ -18,15 +18,15 @@ dependencies:
   geolocator: any
   cloud_firestore: any
   intl: any
-  google_sign_in_ios: ^5.7.6
-  permission_handler: ^11.3.1
-  uuid: ^4.4.0
-  firebase_dynamic_links: ^6.0.2
-  share_plus: ^9.0.0
-  location: ^7.0.0
-  provider: ^6.1.2
-  flutter_background_service: ^5.0.10
-  flutter_background_service_android: ^6.2.7
+  google_sign_in_ios: any
+  permission_handler: any
+  uuid: any
+  firebase_dynamic_links: any
+  share_plus: any
+  location: any
+  provider: any
+  flutter_background_service: any
+  flutter_background_service_android: any
 
 dev_dependencies:
   flutter_test:
